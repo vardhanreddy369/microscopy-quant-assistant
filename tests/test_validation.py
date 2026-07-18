@@ -15,6 +15,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.validation import (
+    DEFAULT_THRESHOLDS,
     DatasetScore,
     decode_colored_mask,
     iou_matrix,
@@ -205,3 +206,26 @@ class TestAggregation:
         predicted = boxes((40, 60), [(1, slice(3, 13), slice(3, 13))])
         value = DatasetScore(images=[score_image(predicted, truth)]).average_precision()
         assert 0.0 < value < 1.0
+
+
+class TestThresholdSweep:
+    """The sweep is a named external standard, so it must actually match it."""
+
+    def test_uses_the_full_ten_threshold_standard(self):
+        # IoU 0.50 to 0.95 in steps of 0.05. np.arange excludes its endpoint, so
+        # a stop of 0.95 silently yields nine thresholds and an average that is
+        # not comparable to published Data Science Bowl or COCO numbers.
+        assert len(DEFAULT_THRESHOLDS) == 10
+        assert float(DEFAULT_THRESHOLDS[0]) == pytest.approx(0.50)
+        assert float(DEFAULT_THRESHOLDS[-1]) == pytest.approx(0.95)
+
+    def test_thresholds_are_evenly_spaced(self):
+        steps = np.diff([float(t) for t in DEFAULT_THRESHOLDS])
+        assert np.allclose(steps, 0.05)
+
+    def test_average_precision_spans_every_threshold(self):
+        truth = boxes((40, 60), [(1, slice(2, 12), slice(2, 12))])
+        result = DatasetScore(images=[score_image(truth, truth)])
+        assert set(result.images[0].per_threshold) == {
+            float(t) for t in DEFAULT_THRESHOLDS
+        }

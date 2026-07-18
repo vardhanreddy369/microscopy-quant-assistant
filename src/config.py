@@ -13,6 +13,30 @@ ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_DIR = ROOT / "sample_data"
 OUTPUT_DIR = ROOT / "outputs"
 
+# Interactive size limits. These live here rather than in app.py so the single
+# image and batch paths cannot drift apart: the batch loop previously had no
+# guard at all, and one oversized file could stall an entire run.
+MAX_PIXELS = 40_000_000
+SLOW_PIXELS = 6_000_000
+
+SIZE_OK = "ok"
+SIZE_SLOW = "slow"
+SIZE_TOO_LARGE = "too_large"
+
+
+def size_verdict(height: int, width: int) -> tuple[str, str]:
+    """Classify an image by pixel count. Returns ``(verdict, message)``."""
+    pixels = int(height) * int(width)
+    if pixels > MAX_PIXELS:
+        return SIZE_TOO_LARGE, (
+            f"{width}x{height} pixels exceeds the {MAX_PIXELS:,} pixel limit for "
+            "interactive analysis. Crop or downscale the image first."
+        )
+    if pixels > SLOW_PIXELS:
+        return SIZE_SLOW, f"Large image ({width}x{height}). Analysis may take a few seconds."
+    return SIZE_OK, ""
+
+
 DEFAULTS = {
     "channel": "grayscale",
     "background": "dark",

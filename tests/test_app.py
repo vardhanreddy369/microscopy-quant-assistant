@@ -159,3 +159,50 @@ class TestBatchMode:
         frames = [element.value for element in app.dataframe]
         assert frames, "batch mode produced no tables"
         assert any("source_image" in frame.columns for frame in frames)
+
+
+class TestBatchSizeGuard:
+    """The batch path must apply the same size limit as the single-image path.
+
+    It previously applied none, so one oversized upload could stall an entire
+    run. The cap is lowered here rather than generating a real 40-megapixel
+    image, which would make the suite slow for no extra coverage.
+    """
+
+    @staticmethod
+    def run_batch_with_cap(max_pixels: int):
+        from src import config
+
+        original = config.MAX_PIXELS
+        config.MAX_PIXELS = max_pixels
+        try:
+            app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+            app.run()
+            find(app.sidebar.radio, "Mode").set_value("Batch (multiple images)").run()
+            find(app.button, "Run batch analysis").click().run()
+            return app
+        finally:
+            config.MAX_PIXELS = original
+
+    def test_oversized_images_are_skipped_rather_than_analysed(self):
+        app = self.run_batch_with_cap(1_000)  # every bundled sample exceeds this
+        assert not app.exception
+
+        summaries = [f for f in (e.value for e in app.dataframe) if "error" in f.columns]
+        assert summaries, "no per-image summary table was produced"
+        errors = summaries[0]["error"].astype(str)
+        assert errors.str.contains("skipped").all(), (
+            "batch mode analysed images that exceed the size limit"
+        )
+
+    def test_skipping_does_not_abort_the_whole_batch(self):
+        app = self.run_batch_with_cap(1_000)
+        summaries = [f for f in (e.value for e in app.dataframe) if "error" in f.columns]
+        # Every image still gets a row, rather than the run dying on the first.
+        assert len(summaries[0]) >= 5
+
+    def test_normal_sizes_still_analyse(self):
+        app = self.run_batch_with_cap(40_000_000)
+        assert not app.exception
+        total = find(app.metric, "Total objects across all images")
+        assert int(total.value.replace(",", "")) > 0

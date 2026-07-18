@@ -13,10 +13,13 @@ import numpy as np
 from scipy import ndimage as ndi
 from scipy.optimize import linear_sum_assignment
 
-# The standard instance-segmentation sweep, as used by the 2018 Data Science
-# Bowl. Averaging over thresholds stops a method looking good purely because it
-# is scored at a single lenient overlap.
-DEFAULT_THRESHOLDS = tuple(np.round(np.arange(0.5, 0.95, 0.05), 2))
+# The standard instance-segmentation sweep: IoU 0.50 to 0.95 in steps of 0.05,
+# ten thresholds, as used by the 2018 Data Science Bowl and COCO. Averaging over
+# thresholds stops a method looking good purely because it is scored at a single
+# lenient overlap. The stop value is 1.0 rather than 0.95 because np.arange
+# excludes its endpoint, and stopping at 0.90 would quietly report a nine-
+# threshold average while claiming to match the ten-threshold standard.
+DEFAULT_THRESHOLDS = tuple(np.round(np.arange(0.5, 1.0, 0.05), 2))
 
 # Fraction of a ground-truth object a prediction must cover before it counts as
 # having claimed part of it, when attributing split and merge errors.

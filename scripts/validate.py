@@ -83,7 +83,7 @@ def report(score: DatasetScore, title: str) -> None:
     print(f"  recall              {summary['recall_at_50']:.3f}")
     print(f"F1 @ IoU 0.75         {summary['f1_at_75']:.3f}")
     print(f"average precision     {summary['average_precision']:.3f}   "
-          f"(mean over IoU 0.50-0.90)")
+          f"(mean over IoU 0.50-0.95)")
     print(f"mean IoU of matches   {summary['mean_matched_iou']:.3f}")
     print()
     print(f"split errors          {summary['split_errors']:,}   "

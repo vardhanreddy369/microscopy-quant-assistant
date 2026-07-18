@@ -107,7 +107,7 @@ parameters grid-searched on the training split only:
 | F1 @ IoU 0.50 | **0.899** |
 | Precision / Recall @ 0.50 | 0.951 / 0.853 |
 | F1 @ IoU 0.75 | 0.838 |
-| Average precision (IoU 0.50–0.90) | 0.706 |
+| Average precision (IoU 0.50–0.95) | 0.653 |
 | Mean IoU of matched objects | 0.886 |
 | Split / merge errors | 87 / 258 |
 
@@ -133,7 +133,7 @@ disagreed, and lighter smoothing with no morphological dilation won:
 | | Old (by eye) | New (from annotations) |
 | --- | ---: | ---: |
 | F1 @ 0.50 | 0.889 | **0.899** |
-| Average precision | 0.660 | **0.706** |
+| Average precision | 0.605 | **0.653** |
 | Mean matched IoU | 0.862 | **0.886** |
 | Split errors | 112 | **87** |
 
@@ -141,9 +141,23 @@ The synthetic samples score identically (32/32 and 34/34) under both settings,
 so no amount of work on the synthetic data could have found this. That is the
 case for real annotations in one table.
 
-Test-split scores came out marginally *above* training-split scores, which is
-the expected signature of a method with very few free parameters and no
-capacity to memorise.
+### No sign of overfitting
+
+Scores across all three official splits, with the parameters chosen on
+`training` alone:
+
+| Split | Images | F1 @ 0.50 | Average precision |
+| --- | ---: | ---: | ---: |
+| training (tuned on) | 100 | 0.895 | 0.646 |
+| validation | 50 | 0.884 | 0.635 |
+| test (held out) | 50 | 0.899 | 0.653 |
+
+The whole spread is 0.018 AP, and the held-out test split scores slightly
+*above* the split the parameters were fitted on. That is split-to-split
+variation rather than a generalisation gap, which is what you would expect from
+a method with four integer-ish knobs and no capacity to memorise anything. It
+also means the headline number is not a lucky split: any of the three would
+have supported the same claim.
 
 ## Still open
 

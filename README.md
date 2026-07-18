@@ -137,7 +137,7 @@ come from the **held-out test split**, which was never used for tuning.
 | Precision @ 0.50 | 0.951 | 0.949 |
 | Recall @ 0.50 | 0.853 | 0.845 |
 | F1 @ IoU 0.75 | 0.838 | 0.830 |
-| Average precision (IoU 0.50–0.90) | 0.706 | 0.696 |
+| Average precision (IoU 0.50–0.95) | 0.653 | 0.645 |
 | Mean IoU of matched objects | 0.886 | 0.886 |
 | Count error (MAPE) | 10.9% | 11.0% |
 
@@ -162,10 +162,15 @@ a learned model such as Cellpose would be expected to help most.
 
 **What this changed.** An earlier version of these defaults was tuned by eye on
 a single crop of one image. The annotated data disagreed: lighter smoothing with
-no morphological dilation raised mean matched IoU from 0.862 to 0.886 and F1
-from 0.889 to 0.899. The synthetic samples score identically under both, so only
-real annotations could tell them apart. That is the argument for validating
-against annotated data rather than against intuition.
+no morphological dilation raised mean matched IoU from 0.862 to 0.886, F1 from
+0.889 to 0.899, and average precision from 0.605 to 0.653. The synthetic samples
+score identically under both, so only real annotations could tell them apart.
+That is the argument for validating against annotated data rather than against
+intuition.
+
+Average precision is averaged over the full ten-threshold sweep, IoU 0.50 to
+0.95 in steps of 0.05, the same range used by the Data Science Bowl and COCO, so
+the figure is comparable to published numbers rather than to a private variant.
 
 ### Against known counts (synthetic samples)
 
@@ -252,7 +257,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      112 tests
+tests/                      129 tests
 outputs/                    Generated results
 ```
 
@@ -262,7 +267,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-112 tests covering image loading, multi-page and bit-depth handling, channel
+129 tests covering image loading, multi-page and bit-depth handling, channel
 selection,
 thresholding, watershed separation, measurement correctness, counting accuracy
 against ground truth, the scoring metrics themselves, and the interface driven

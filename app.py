@@ -12,12 +12,16 @@ import pandas as pd
 import streamlit as st
 
 from src import export, measurements, preprocessing, segmentation, visualization
-from src.config import DEFAULTS, SAMPLE_IMAGES, SAMPLE_OVERRIDES, sample_path
+from src.config import (
+    DEFAULTS,
+    SAMPLE_IMAGES,
+    SAMPLE_OVERRIDES,
+    SIZE_OK,
+    SIZE_TOO_LARGE,
+    sample_path,
+    size_verdict,
+)
 from src.preprocessing import BACKGROUNDS, CHANNELS, ImageLoadError
-
-# Guards against a multi-gigapixel upload stalling the app during a live demo.
-MAX_PIXELS = 40_000_000
-SLOW_PIXELS = 6_000_000
 
 AUTO_METHODS = ("otsu", "li", "yen", "triangle")
 
@@ -389,8 +393,22 @@ def render_batch(sources: list[tuple[bytes, str]]) -> None:
     for index, (image_bytes, name) in enumerate(sources, start=1):
         progress.progress(index / len(sources), text=f"Analysing {name}...")
         try:
+            # The same size guard the single-image path applies. Without it one
+            # oversized file in a batch can stall the whole run.
+            probe = preprocessing.load_image(io.BytesIO(image_bytes))
+            verdict, message = size_verdict(probe.shape[0], probe.shape[1])
+            if verdict == SIZE_TOO_LARGE:
+                rows.append({
+                    "source_image": name,
+                    "objects_detected": None,
+                    "error": f"skipped: {message}",
+                })
+                continue
             _, result, frame = analyze(image_bytes, **PARAMS)
-        except (ImageLoadError, ValueError) as exc:
+        # MemoryError is caught per image too: letting it reach the top-level
+        # handler would abort the batch and discard every result already
+        # computed, rather than failing just the one image.
+        except (ImageLoadError, ValueError, MemoryError) as exc:
             rows.append({"source_image": name, "objects_detected": None, "error": str(exc)})
             continue
 
@@ -466,21 +484,12 @@ try:
         else:
             image_bytes, display_name = source
             probe = preprocessing.load_image(io.BytesIO(image_bytes))
-            pixels = probe.shape[0] * probe.shape[1]
-            if pixels > MAX_PIXELS:
-                st.error(
-                    f"This image is {probe.shape[1]}x{probe.shape[0]} pixels, which "
-                    "is too large to analyse interactively. Crop or downscale it "
-                    "first.",
-                    icon="🛑",
-                )
+            verdict, message = size_verdict(probe.shape[0], probe.shape[1])
+            if verdict == SIZE_TOO_LARGE:
+                st.error(message, icon="🛑")
             else:
-                if pixels > SLOW_PIXELS:
-                    st.info(
-                        f"Large image ({probe.shape[1]}x{probe.shape[0]}). "
-                        "Analysis may take a few seconds.",
-                        icon="⏳",
-                    )
+                if verdict != SIZE_OK:
+                    st.info(message, icon="⏳")
                 with st.spinner("Analysing..."):
                     render_single(image_bytes, display_name)
     else:

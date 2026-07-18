@@ -16,7 +16,7 @@
     "precision_at_50": 0.9508676155195944,
     "recall_at_50": 0.8526223776223776,
     "f1_at_75": 0.8384182873997603,
-    "average_precision": 0.706361375647523,
+    "average_precision": 0.6534188809554112,
     "mean_matched_iou": 0.886178438871533,
     "split_errors": 87,
     "merge_errors": 258,
