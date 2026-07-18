@@ -1,0 +1,47 @@
+Sample data
+===========
+
+public_human_mitosis.png
+    Real fluorescence microscopy image of human cells undergoing mitosis,
+    nuclei stained and imaged on a dark background.
+    Source: the scikit-image sample data collection (`skimage.data.human_mitosis`),
+    which distributes it from https://gitlab.com/scikit-image/data.
+    scikit-image is BSD-3-Clause licensed and provides this image for public
+    demonstration and testing use.
+    This is the primary demonstration image: real data, bright nuclei on a dark
+    background, with both separated and touching nuclei present.
+
+public_immunohistochemistry.png
+    Real brightfield immunohistochemistry image (H-DAB stained tissue), RGB.
+    Source: the scikit-image sample data collection
+    (`skimage.data.immunohistochemistry`), BSD-3-Clause.
+    Included because it is a light-background colour image, which exercises the
+    channel-selection and background-mode controls. The classical nucleus
+    pipeline is not tuned for brightfield histology and should not be read as
+    validated for it.
+
+Both public images are demonstration data. Neither is from any UCF laboratory,
+and neither contains patient-identifying information.
+
+synthetic_easy.png
+synthetic_moderate.png
+synthetic_difficult.png
+    Generated programmatically by scripts/make_sample_data.py using fixed random
+    seeds, so they are exactly reproducible. They are simulations, not real
+    biological images, and exist to exercise three defined conditions:
+
+      easy       well separated nuclei, high signal-to-noise
+      moderate   nuclei touching at their boundaries; the case watershed addresses
+      difficult  dense, deeply overlapping, noisy, unevenly illuminated
+
+    Because the generator places each nucleus, the true object count is known
+    and recorded in ground_truth.json. This is what makes it possible to report
+    counting accuracy rather than assert it.
+
+    The difficult image is included deliberately as a failure case. The
+    classical pipeline does not handle it well, and that limitation is measured
+    and reported rather than hidden. Its debris objects are excluded from the
+    ground-truth count, so over-counting there is a real error.
+
+No image in this directory came from a publication, a clinical source, or an
+unpublished dataset.

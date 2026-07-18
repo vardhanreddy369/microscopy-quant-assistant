@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+
+# Analysis outputs are regenerated on demand.
+outputs/*
+!outputs/.gitkeep
