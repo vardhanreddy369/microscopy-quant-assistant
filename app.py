@@ -67,6 +67,7 @@ def analyze(
     fill_holes: bool,
     separate_touching: bool,
     peak_min_distance: int,
+    background_radius: int,
     pixel_size_um: float | None,
 ):
     """Run the full pipeline. Cached on the image bytes and every parameter."""
@@ -83,6 +84,7 @@ def analyze(
         fill_holes=fill_holes,
         separate_touching=separate_touching,
         peak_min_distance=peak_min_distance,
+        background_radius=background_radius,
     )
     frame = measurements.measure(result.labels, prepared.intensity, pixel_size_um)
     return prepared, result, frame
@@ -175,6 +177,15 @@ smoothing_sigma = st.sidebar.slider(
     help="Blur applied before thresholding. Higher removes more noise but "
          "merges nearby objects.",
 )
+background_radius = st.sidebar.slider(
+    "Uneven illumination correction (0 = off)", 0, 60,
+    int(DEFAULTS["background_radius"]), 5,
+    help="Flattens a slowly varying background before thresholding. Use when "
+         "one part of the field is brighter than another, which makes a single "
+         "threshold drop real objects in the dim region. Set it larger than "
+         "your objects. Off by default: it is roughly ten times slower and "
+         "buys nothing on evenly lit images.",
+)
 
 st.sidebar.divider()
 st.sidebar.subheader("Segmentation")
@@ -244,6 +255,7 @@ PARAMS = dict(
     fill_holes=fill_holes,
     separate_touching=separate_touching,
     peak_min_distance=peak_min_distance,
+    background_radius=background_radius,
     pixel_size_um=pixel_size,
 )
 

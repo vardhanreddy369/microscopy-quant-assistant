@@ -243,3 +243,52 @@ class TestSmoothing:
     def test_smoothing_reduces_variance(self):
         image = np.random.default_rng(0).random((40, 40)).astype(np.float32)
         assert preprocessing.smooth(image, 2.0).var() < image.var()
+
+
+class TestIlluminationCorrection:
+    """Flattening a slowly varying background before thresholding."""
+
+    @staticmethod
+    def uneven_field(size=200, radius=9):
+        """Identical bright spots on a background that fades across the frame."""
+        image = np.zeros((size, size), dtype=np.float32)
+        yy, xx = np.mgrid[0:size, 0:size]
+        image += 0.55 * (xx / size)  # gradient: dark left, bright right
+        for cx in (30, 100, 170):
+            image[((yy - size // 2) ** 2 + (xx - cx) ** 2) <= radius**2] += 0.35
+        return np.clip(image, 0, 1)
+
+    def test_zero_radius_is_a_no_op(self):
+        image = self.uneven_field()
+        assert np.allclose(preprocessing.correct_illumination(image, 0), image)
+
+    def test_flattens_a_background_gradient(self):
+        image = self.uneven_field()
+        corrected = preprocessing.correct_illumination(image, 25)
+        # Compare background-only columns on the dark and bright sides.
+        row = 10  # away from the objects
+        assert abs(float(corrected[row, 20] - corrected[row, 180])) < abs(
+            float(image[row, 20] - image[row, 180])
+        )
+
+    def test_objects_survive_correction(self):
+        image = self.uneven_field()
+        corrected = preprocessing.correct_illumination(image, 25)
+        centre = 100
+        for cx in (30, 100, 170):
+            assert corrected[centre, cx] > corrected[10, cx], (
+                "object at x=%d was removed by the correction" % cx
+            )
+
+    def test_radius_smaller_than_objects_erases_them(self):
+        """Documents the failure mode: the radius must exceed the objects."""
+        image = self.uneven_field(radius=20)
+        corrected = preprocessing.correct_illumination(image, 3)
+        assert corrected[100, 100] < 0.5
+
+    def test_it_is_off_by_default(self):
+        # The published BBBC039 scores assume no correction. If this default
+        # changed, those numbers would no longer describe the shipped pipeline.
+        from src.config import DEFAULTS
+
+        assert DEFAULTS["background_radius"] == 0

@@ -176,3 +176,71 @@ class TestGroundTruthAccuracy:
             f"detected {detected} of {expected}; the README documents this as a "
             "partial-recall failure case"
         )
+
+
+class TestIlluminationCorrectionInSegmentation:
+    """Uneven illumination defeats a single global threshold.
+
+    This is a distinct failure mode from touching objects, and unlike touching
+    objects it *is* fixable. It shows up in two ways at once: dim objects on the
+    dark side fall below the threshold, and the bright side of the background
+    rises above it and fragments into spurious detections.
+    """
+
+    @staticmethod
+    def unevenly_lit_disks(size=240, radius=16):
+        """Three identical disks on a background that fades across the frame."""
+        image = np.zeros((size, size), dtype=np.float32)
+        yy, xx = np.mgrid[0:size, 0:size]
+        image += 0.70 * (xx / size)
+        for cx in (40, 120, 200):
+            image[((yy - 120) ** 2 + (xx - cx) ** 2) <= radius**2] += 0.20
+        return np.clip(image, 0, 1)
+
+    def test_uncorrected_threshold_misses_the_dim_object(self):
+        plane = self.unevenly_lit_disks()
+        result = segment_with_defaults(plane, background_radius=0)
+        assert result.labels[120, 40] == 0, (
+            "expected the disk on the dark side to fall below a global threshold"
+        )
+
+    def test_uncorrected_threshold_also_detects_the_background(self):
+        # The bright end of the gradient exceeds the threshold and breaks into
+        # spurious objects, so the count is wrong in both directions at once.
+        plane = self.unevenly_lit_disks()
+        assert segment_with_defaults(plane, background_radius=0).n_objects > 10
+
+    def test_correction_recovers_the_dim_object(self):
+        plane = self.unevenly_lit_disks()
+        result = segment_with_defaults(plane, background_radius=30)
+        assert result.labels[120, 40] > 0
+
+    def test_correction_finds_exactly_the_three_real_objects(self):
+        plane = self.unevenly_lit_disks()
+        assert segment_with_defaults(plane, background_radius=30).n_objects == 3
+
+    def test_radius_smaller_than_objects_corrupts_their_area_silently(self):
+        """A too-small radius keeps the count but hollows the objects out.
+
+        A top-hat removes structure larger than its radius, so a radius under
+        the object size strips each object's flat interior and leaves only a
+        rim. The count still comes out right, which is exactly what makes it
+        dangerous: the areas are wrong by a factor of five and nothing in the
+        output signals it. Hence the control's help text saying to set the
+        radius larger than the objects.
+        """
+        plane = self.unevenly_lit_disks()
+        good = segment_with_defaults(plane, background_radius=30)
+        bad = segment_with_defaults(plane, background_radius=3)
+
+        assert bad.n_objects == good.n_objects == 3, "the count is not the tell"
+        assert bad.mask.sum() < 0.5 * good.mask.sum(), (
+            "expected a too-small radius to erode the objects"
+        )
+
+    def test_default_leaves_segmentation_unchanged(self):
+        plane = disk_image(centres=((50, 50), (150, 150)))
+        assert (
+            segment_with_defaults(plane).n_objects
+            == segment_with_defaults(plane, background_radius=0).n_objects
+        )

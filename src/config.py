@@ -58,6 +58,11 @@ DEFAULTS = {
     "fill_holes": True,
     "separate_touching": True,
     "peak_min_distance": 9,
+    # Off by default. It is ~10x slower than the rest of the pipeline and on the
+    # evenly illuminated BBBC039 benchmark it is worth at most +0.004 F1, inside
+    # noise. It matters a great deal on unevenly lit images: it takes the
+    # difficult synthetic sample from 72 to 90 of 110 objects.
+    "background_radius": 0,
     "pixel_size_um": None,
 }
 

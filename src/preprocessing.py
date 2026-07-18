@@ -14,6 +14,7 @@ import imageio.v3 as iio
 from skimage import exposure
 from skimage.color import rgb2gray
 from skimage.filters import gaussian
+from skimage.morphology import disk, white_tophat
 
 CHANNELS = ("grayscale", "red", "green", "blue")
 BACKGROUNDS = ("dark", "light")
@@ -167,6 +168,31 @@ def smooth(plane: np.ndarray, sigma: float) -> np.ndarray:
     if sigma is None or sigma <= 0:
         return plane.astype(np.float32, copy=False)
     return gaussian(plane, sigma=float(sigma), preserve_range=True).astype(np.float32)
+
+
+def correct_illumination(plane: np.ndarray, radius: int) -> np.ndarray:
+    """Flatten a slowly varying background (a white top-hat, or "rolling ball").
+
+    A single global threshold assumes the background is uniform. When one corner
+    of the field is brighter than another, any threshold that keeps the dim
+    corner floods the bright one, and any threshold that suits the bright corner
+    drops real objects in the dim one. Subtracting a morphological opening
+    removes structure larger than ``radius`` while leaving the objects.
+
+    ``radius`` must be larger than the objects being measured, or it removes
+    them too. ``radius <= 0`` is a no-op.
+
+    This is off by default. It costs an order of magnitude more time than the
+    rest of the pipeline, and on evenly illuminated images it buys nothing.
+    """
+    if not radius or radius <= 0:
+        return plane.astype(np.float32, copy=False)
+
+    flattened = white_tophat(plane, disk(int(radius)))
+    span = float(np.ptp(flattened))
+    if span <= 0:
+        return np.zeros_like(flattened, dtype=np.float32)
+    return ((flattened - flattened.min()) / span).astype(np.float32)
 
 
 @dataclass

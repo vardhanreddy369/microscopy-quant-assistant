@@ -17,7 +17,7 @@ from skimage.filters import threshold_li, threshold_otsu, threshold_triangle, th
 from skimage.morphology import closing, disk, opening, remove_small_objects
 from skimage.segmentation import relabel_sequential, watershed
 
-from .preprocessing import smooth
+from .preprocessing import correct_illumination, smooth
 
 THRESHOLD_METHODS = ("otsu", "li", "yen", "triangle", "manual")
 
@@ -158,16 +158,22 @@ def segment(
     fill_holes: bool = True,
     separate_touching: bool = True,
     peak_min_distance: int = 7,
+    background_radius: int = 0,
 ) -> SegmentationResult:
     """Run the full segmentation pipeline on a prepared analysis plane.
 
     ``plane`` must be the 2-D float image produced by :func:`preprocessing.prepare`.
+
+    ``background_radius`` optionally flattens uneven illumination before
+    thresholding. It is applied to segmentation's own working copy, so intensity
+    is still measured on the unmodified plane.
     """
     plane = np.asarray(plane, dtype=np.float32)
     if plane.ndim != 2:
         raise ValueError(f"expected a 2-D analysis plane, got shape {plane.shape}")
 
-    blurred = smooth(plane, smoothing_sigma)
+    working = correct_illumination(plane, background_radius)
+    blurred = smooth(working, smoothing_sigma)
     threshold = compute_threshold(blurred, threshold_method, manual_threshold)
 
     if not np.isfinite(threshold):

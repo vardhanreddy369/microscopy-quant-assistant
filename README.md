@@ -10,6 +10,7 @@ images into object-level quantitative measurements.
 - Fluorescence-channel selection (grayscale, red, green, blue)
 - Cell/nucleus segmentation by classical image processing
 - Separation of touching objects using a distance-transform watershed
+- Optional correction of uneven illumination before thresholding
 - Cell counting
 - Area, shape, and intensity measurements per object
 - Multi-page TIFF and z-stack input, flattened by maximum intensity projection
@@ -72,6 +73,7 @@ Load image
    -> select channel (or convert to grayscale)
    -> invert if the background is light
    -> percentile contrast normalisation          [segmentation copy only]
+   -> optional illumination correction           [segmentation copy only, off by default]
    -> Gaussian smoothing
    -> threshold (Otsu, Li, Yen, Triangle, or manual)
    -> morphological opening and closing
@@ -193,11 +195,28 @@ than asserted.
 | `synthetic_difficult.png` | 110 | 72 | **Known failure case (65% recall)** |
 
 The difficult sample is dense, deeply overlapping, noisy, and unevenly
-illuminated. It is included on purpose. A distance-transform watershed cannot
-recover individual objects once they overlap past a certain point, and no
-amount of parameter tuning fixes that. The limitation is measured and reported
-here rather than hidden, and a test asserts it stays within a documented range
-so the claim cannot silently drift.
+illuminated. It is included on purpose, and taking it apart showed that its
+shortfall is **two separate problems**, only one of which is a watershed
+limitation. An earlier version of this README claimed no amount of parameter
+tuning could help. That was wrong, and the diagnosis is worth stating.
+
+Because the generator places every nucleus, each true nucleus can be checked
+against the output individually:
+
+- **98 of 110 nuclei are found** — their centre falls inside a detected object.
+  Only 12 are missed outright.
+- All 12 of those lie **outside the foreground mask**, and none were merged into
+  a neighbour. They are dim (brightness 0.29–0.48) and clustered in the dark
+  corner: 37% are missed where `x < 128`, and none at all where `x > 256`.
+
+That is not overlap. That is a single global threshold failing on an unevenly
+lit field, and it is fixable. Turning on illumination correction takes the
+detected count from **72 to 90 of 110**.
+
+What remains after that is the genuine limit: 90 detected objects still contain
+more than 90 nuclei, because nuclei overlapping past a certain point share one
+distance-transform peak and cannot be separated. A test asserts the uncorrected
+result stays in its documented range so this claim cannot silently drift.
 
 On the demonstration image (`public_human_mitosis.png`, 512×512) the pipeline
 detects 260 objects in roughly 0.1 seconds. There is no ground truth for that
@@ -221,7 +240,12 @@ reproducible.
 - Dense or heavily overlapping objects are under-counted (measured above).
 - The watershed assumes roughly convex objects. Highly irregular cells will be
   split incorrectly.
-- A single global threshold does not suit unevenly illuminated images.
+- A single global threshold does not suit unevenly illuminated images. The
+  optional illumination correction addresses this, but it is off by default: it
+  costs roughly ten times the runtime and is worth at most +0.004 F1 on the
+  evenly lit BBBC039 benchmark, which is inside noise. Set its radius larger
+  than your objects — a smaller radius hollows them out and under-measures area
+  while leaving the object count looking correct.
 - Brightfield histology is supported only in the sense that the controls accept
   it. The pipeline is tuned for bright objects on a dark background and is not
   validated for stained tissue.
@@ -264,7 +288,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      129 tests
+tests/                      140 tests
 outputs/                    Generated results
 ```
 
@@ -274,7 +298,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-129 tests covering image loading, multi-page and bit-depth handling, channel
+140 tests covering image loading, multi-page and bit-depth handling, channel
 selection,
 thresholding, watershed separation, measurement correctness, counting accuracy
 against ground truth, the scoring metrics themselves, and the interface driven
