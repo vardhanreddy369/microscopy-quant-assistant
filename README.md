@@ -47,6 +47,9 @@ python scripts/run_pipeline.py sample_data/public_human_mitosis.png
 
 That writes a CSV, a segmentation mask, and an annotated image to `outputs/`.
 
+A three-minute demonstration script, including the failure case to show
+and the questions to expect, is in [DEMO.md](DEMO.md).
+
 ## Method
 
 ```
