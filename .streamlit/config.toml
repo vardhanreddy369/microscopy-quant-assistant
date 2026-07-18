@@ -1,0 +1,9 @@
+# Demo-facing defaults: keep developer chrome and product prompts off the screen
+# during a live demonstration.
+
+[client]
+# Hide the rerun / clear-cache / deploy developer controls from the toolbar.
+toolbarMode = "viewer"
+
+[browser]
+gatherUsageStats = false

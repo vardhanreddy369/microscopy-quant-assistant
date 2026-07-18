@@ -37,6 +37,13 @@ st.markdown(
       [data-testid="stMetricValue"] { font-size: 2.0rem; }
       [data-testid="stMetricLabel"] { font-size: 0.95rem; }
       .block-container { padding-top: 2.2rem; }
+
+      /* Streamlit's "install our skills" product nudge overlays the title and
+         the validation disclaimer. Fine while developing, not while presenting
+         to someone. Targeted by test id, which is stable, rather than by the
+         hashed emotion class, which is not. */
+      [data-testid="stSkillsNudge"],
+      [data-testid="stSkillsNudgeAnchor"] { display: none !important; }
     </style>
     """,
     unsafe_allow_html=True,
