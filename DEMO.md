@@ -26,7 +26,7 @@ conversation about a real need could turn into.
 ## The run (about 90 seconds)
 
 1. The app is already showing the real fluorescence image, analysed.
-2. Point at the count: **284 objects detected**.
+2. Point at the count: **260 objects detected**.
 3. Zoom the annotated panel. Point at a pair of touching nuclei with a line
    between them.
    > "Those two nuclei are touching. A simple threshold counts them as one
@@ -62,10 +62,10 @@ Then stop talking and let him answer.
 
 ## If he asks "how accurate is it?"
 
-> "On images where I know the true count, it's exact on separated and touching
-> nuclei, and about 65% on dense overlapping ones. On your images I have no
-> idea, and I wouldn't claim otherwise until I'd tested it against slides
-> someone in the lab had annotated by hand."
+> "I scored it against a public dataset of about 23,000 hand-annotated nuclei.
+> F1 is 0.90 at the standard overlap threshold, on images it wasn't tuned on.
+> On your images I have no idea, and I wouldn't claim otherwise until I'd
+> tested it against slides someone here had annotated."
 
 ## If he asks "we already use ImageJ / Fiji"
 

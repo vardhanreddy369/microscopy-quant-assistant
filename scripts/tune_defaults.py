@@ -18,14 +18,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src import measurements, preprocessing, segmentation
+from src import preprocessing, segmentation
 from src.config import DEFAULTS, SAMPLE_DIR
 
 SCORED = ("synthetic_easy.png", "synthetic_moderate.png")
 REPORTED_ONLY = ("synthetic_difficult.png",)
 
+# Superseded for choosing the shipped defaults: those now come from
+# scripts/tune_on_bbbc039.py, which scores against real expert annotations
+# rather than known counts. This script is kept because it is the only check
+# that a parameter change does not break exact counting on the synthetic
+# samples, which the annotation metrics do not measure.
 GRID = {
-    "smoothing_sigma": [1.0, 1.4, 1.6, 2.0, 2.4],
+    "smoothing_sigma": [0.6, 1.0, 1.4, 1.6, 2.0, 2.4],
     "peak_min_distance": [5, 7, 9, 11, 13],
     "min_size": [40, 60, 80],
 }

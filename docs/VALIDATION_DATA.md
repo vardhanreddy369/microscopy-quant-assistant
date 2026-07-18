@@ -1,10 +1,12 @@
 # Validation data
 
-The single biggest gap in this project is the line in the README: *"Nothing here
-is validated against expert annotation."* Closing it needs real microscopy
-images with per-object ground-truth masks.
+The biggest gap in this project used to be that nothing was validated against
+expert annotation. Closing it needed real microscopy images with per-object
+ground-truth masks.
 
-This document records which datasets are worth using and why.
+That is now done — see [Results](#results-done) — and this document records
+which datasets were considered, which was chosen and why, and what the scoring
+turned up. It is kept as the working record behind the numbers in the README.
 
 ## Conclusion first
 
@@ -19,7 +21,7 @@ sources that several of the Kaggle re-uploads are copied from.
 
 Verified download URLs (all return HTTP 200):
 
-```
+```text
 https://data.broadinstitute.org/bbbc/BBBC039/images.zip      74 MB
 https://data.broadinstitute.org/bbbc/BBBC039/masks.zip        2 MB
 https://data.broadinstitute.org/bbbc/BBBC039/metadata.zip    <1 MB
@@ -88,12 +90,65 @@ correctly, but it cannot demonstrate anything about Professor Singla's actual
 assays. That gap is closed by representative images from the lab, not by more
 downloading. Which is exactly the ask in `DEMO.md`.
 
-## Suggested next step
+## Results (done)
 
-1. Fetch BBBC039 (76 MB) into a gitignored `validation_data/` directory.
-2. Decode the coloured masks into labelled matrices.
-3. Score the existing pipeline: F1 at IoU 0.5–0.9, plus split/merge counts.
-4. Put the real number in the README, whatever it turns out to be.
+BBBC039 is now wired in. Reproduce with:
 
-Step 4 is the point. A measured F1 against 23,000 hand-annotated nuclei is a far
-stronger thing to show than any amount of describing the method.
+```bash
+python scripts/fetch_validation_data.py
+python scripts/validate.py --split test
+```
+
+Headline on the **held-out test split** (50 images, 5,720 nuclei), with
+parameters grid-searched on the training split only:
+
+| Metric | Value |
+| --- | ---: |
+| F1 @ IoU 0.50 | **0.899** |
+| Precision / Recall @ 0.50 | 0.951 / 0.853 |
+| F1 @ IoU 0.75 | 0.838 |
+| Average precision (IoU 0.50–0.90) | 0.706 |
+| Mean IoU of matched objects | 0.886 |
+| Split / merge errors | 87 / 258 |
+
+Recorded in `validation_bbbc039_test.json` and `validation_bbbc039_all.json`.
+
+### The mask-format trap
+
+The BBBC039 masks are **not** labelled by object id. They are 4-coloured so any
+two touching nuclei carry different colours, and individual objects are
+recovered by connected components computed *within each colour*.
+
+Reading the colour channel as an object id is the obvious first guess and it is
+wrong: it yields 531 objects across the dataset instead of 23,617. Every
+downstream metric would have been silently meaningless. `decode_colored_mask`
+in `src/validation.py` does it correctly, and the count is asserted against the
+documented ~23,000.
+
+### What it changed
+
+The defaults had been tuned by eye on a single crop. The annotated data
+disagreed, and lighter smoothing with no morphological dilation won:
+
+| | Old (by eye) | New (from annotations) |
+| --- | ---: | ---: |
+| F1 @ 0.50 | 0.889 | **0.899** |
+| Average precision | 0.660 | **0.706** |
+| Mean matched IoU | 0.862 | **0.886** |
+| Split errors | 112 | **87** |
+
+The synthetic samples score identically (32/32 and 34/34) under both settings,
+so no amount of work on the synthetic data could have found this. That is the
+case for real annotations in one table.
+
+Test-split scores came out marginally *above* training-split scores, which is
+the expected signature of a method with very few free parameters and no
+capacity to memorise.
+
+## Still open
+
+- **BBBC005** for an accuracy-versus-defocus curve. Not yet done.
+- **Nothing here touches Professor Singla's assays.** Public data proves the
+  method counts Hoechst-stained nuclei well. It says nothing about cardiac
+  tissue, stem cells, or exosome uptake. That gap closes with lab images, not
+  with more downloading.

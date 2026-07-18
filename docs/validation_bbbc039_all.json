@@ -1,0 +1,25 @@
+{
+  "split": "all",
+  "parameters": {
+    "threshold_method": "otsu",
+    "min_size": 60,
+    "smoothing_sigma": 0.6,
+    "cleanup_radius": 0,
+    "peak_min_distance": 9,
+    "separate_touching": true
+  },
+  "summary": {
+    "images": 200,
+    "true_objects": 23617,
+    "predicted_objects": 21025,
+    "f1_at_50": 0.8935531562205994,
+    "precision_at_50": 0.9486325802615934,
+    "recall_at_50": 0.8445187788457467,
+    "f1_at_75": 0.8301151382106536,
+    "average_precision": 0.696262055753937,
+    "mean_matched_iou": 0.8861558249345278,
+    "split_errors": 365,
+    "merge_errors": 1035,
+    "count_mape": 0.10992216687923445
+  }
+}

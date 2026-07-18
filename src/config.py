@@ -18,15 +18,22 @@ DEFAULTS = {
     "background": "dark",
     "threshold_method": "otsu",
     "manual_threshold": 0.35,
+    # These four were chosen by grid search on the BBBC039 *training* split
+    # (100 real fluorescence images, ~11,000 hand-annotated nuclei) and then
+    # confirmed on its held-out test split: see scripts/tune_on_bbbc039.py and
+    # docs/VALIDATION_DATA.md.
+    #
+    # They replace an earlier set picked by eye on a single crop. Light
+    # smoothing with no morphological dilation keeps object boundaries tight,
+    # which is what lifted mean matched IoU from 0.862 to 0.886. The synthetic
+    # samples score identically either way, so only the annotated data could
+    # distinguish them.
     "min_size": 60,
-    "smoothing_sigma": 1.6,
-    "cleanup_radius": 1,
+    "smoothing_sigma": 0.6,
+    "cleanup_radius": 0,
     "fill_holes": True,
     "separate_touching": True,
-    # 7 rather than 9: both score exactly on the synthetic samples, but the real
-    # image has roughly 12-pixel nuclei, and a 9-pixel exclusion radius merges
-    # touching pairs there. Verified with scripts/tune_defaults.py.
-    "peak_min_distance": 7,
+    "peak_min_distance": 9,
     "pixel_size_um": None,
 }
 
