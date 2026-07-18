@@ -106,6 +106,23 @@ SAMPLE_OVERRIDES = {
     "public_immunohistochemistry.png": {"channel": "blue", "background": "light"},
 }
 
+# Samples whose output must not be read as a valid measurement. Reporting a
+# tidy object count and an area column for a result this wrong is precisely the
+# "confidently wrong number" this project sets out to avoid, so the app says so
+# on screen rather than leaving it to the caption.
+SAMPLE_CAVEATS = {
+    "public_immunohistochemistry.png": (
+        "These numbers are not valid nucleus measurements. This pipeline "
+        "thresholds bright objects on a dark background; on brightfield stained "
+        "tissue it instead outlines whole tissue regions and cuts them into "
+        "arbitrary watershed polygons. Here roughly 58% of the image is treated "
+        "as foreground and the average 'object' is about 89 pixels across, "
+        "where a real nucleus would be 10-20. Brightfield histology needs stain "
+        "colour deconvolution, which this tool does not do. The sample is kept "
+        "to show what running a method outside its domain looks like."
+    ),
+}
+
 
 def sample_path(filename: str) -> Path:
     return SAMPLE_DIR / filename

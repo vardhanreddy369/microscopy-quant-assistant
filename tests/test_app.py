@@ -206,3 +206,43 @@ class TestBatchSizeGuard:
         assert not app.exception
         total = find(app.metric, "Total objects across all images")
         assert int(total.value.replace(",", "")) > 0
+
+
+class TestOffDomainSampleCaveat:
+    """A result that is wrong must say so on screen, not just in a caption.
+
+    The brightfield histology sample produces a tidy object count and a full
+    measurement table while segmenting whole tissue regions rather than nuclei.
+    A number that looks valid and is not is the failure mode this project is
+    supposed to avoid.
+    """
+
+    def test_the_histology_sample_warns_that_it_is_invalid(self):
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        find(app.sidebar.selectbox, "or use a demonstration image").set_value(
+            "Immunohistochemistry (real, brightfield)"
+        ).run()
+
+        assert not app.exception
+        errors = " ".join(e.value for e in app.error).lower()
+        assert "not valid" in errors
+        assert "nucleus" in errors or "nuclei" in errors
+
+    def test_the_fluorescence_samples_do_not_warn(self):
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        # The default sample is a good result; it must not be flagged.
+        assert not [e for e in app.error if "not valid" in e.value.lower()]
+
+    def test_switching_back_clears_the_warning(self):
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        selector = find(app.sidebar.selectbox, "or use a demonstration image")
+        selector.set_value("Immunohistochemistry (real, brightfield)").run()
+        assert any("not valid" in e.value.lower() for e in app.error)
+
+        find(app.sidebar.selectbox, "or use a demonstration image").set_value(
+            "Synthetic - easy"
+        ).run()
+        assert not [e for e in app.error if "not valid" in e.value.lower()]

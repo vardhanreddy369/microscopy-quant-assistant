@@ -15,6 +15,7 @@ from src import export, measurements, preprocessing, segmentation, visualization
 from src.config import (
     DEFAULTS,
     SAMPLE_IMAGES,
+    SAMPLE_CAVEATS,
     SAMPLE_OVERRIDES,
     SIZE_OK,
     SIZE_TOO_LARGE,
@@ -277,7 +278,8 @@ st.warning(
 )
 
 
-def render_single(image_bytes: bytes, display_name: str) -> None:
+def render_single(image_bytes: bytes, display_name: str,
+                  active_sample: str | None = None) -> None:
     prepared, result, frame = analyze(image_bytes, **PARAMS)
     summary = measurements.summarize(frame)
 
@@ -300,6 +302,10 @@ def render_single(image_bytes: bytes, display_name: str) -> None:
         help="Mean signal inside objects, on a 0-255 scale, measured before "
              "contrast normalisation.",
     )
+
+    caveat = SAMPLE_CAVEATS.get(active_sample)
+    if caveat:
+        st.error(caveat, icon="🛑")
 
     if result.empty:
         st.error(
@@ -510,7 +516,11 @@ try:
                 if verdict != SIZE_OK:
                     st.info(message, icon="⏳")
                 with st.spinner("Analysing..."):
-                    render_single(image_bytes, display_name)
+                    render_single(
+                        image_bytes,
+                        display_name,
+                        None if uploaded_single is not None else selected_file,
+                    )
     else:
         sources: list[tuple[bytes, str]] = [
             (item.getvalue(), item.name) for item in uploaded_batch
