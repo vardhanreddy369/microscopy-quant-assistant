@@ -14,8 +14,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src import validation
-from src.validation import DatasetScore, decode_colored_mask, iou_matrix, score_image
+from src.validation import (
+    DatasetScore,
+    decode_colored_mask,
+    iou_matrix,
+    score_image,
+)
 
 
 def boxes(shape, specs):

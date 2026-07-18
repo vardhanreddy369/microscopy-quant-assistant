@@ -14,7 +14,6 @@ import streamlit as st
 from src import export, measurements, preprocessing, segmentation, visualization
 from src.config import DEFAULTS, SAMPLE_IMAGES, SAMPLE_OVERRIDES, sample_path
 from src.preprocessing import BACKGROUNDS, CHANNELS, ImageLoadError
-from src.segmentation import THRESHOLD_METHODS
 
 # Guards against a multi-gigapixel upload stalling the app during a live demo.
 MAX_PIXELS = 40_000_000

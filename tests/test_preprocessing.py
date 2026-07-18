@@ -35,7 +35,7 @@ class TestLoading:
         array = np.zeros((8, 8), dtype=np.uint8)
         assert preprocessing.load_image(array).shape == (8, 8)
 
-    def test_stack_is_max_projected_to_two_dimensions(self):
+    def test_stack_array_is_max_projected_to_two_dimensions(self):
         # (Z, H, W): a z-stack, not a colour image.
         stack = np.zeros((5, 20, 20), dtype=np.uint8)
         stack[2, 10, 10] = 200
@@ -52,6 +52,85 @@ class TestLoading:
     def test_garbage_bytes_raise_a_clear_error(self):
         with pytest.raises(ImageLoadError):
             preprocessing.load_image(io.BytesIO(b"this is not an image"))
+
+
+class TestMultiFrameFiles:
+    """Reading *encoded* multi-page files, not arrays passed in directly.
+
+    These go through the real decoder because that is where the bug was:
+    imageio returns only page 0 of a multi-page file, so a z-stack was silently
+    analysed as its first slice. A test that hands load_image a numpy array
+    skips the decoder entirely and passes while the upload path is broken.
+    """
+
+    @staticmethod
+    def encode(array, extension=".tiff") -> io.BytesIO:
+        return io.BytesIO(iio.imwrite("<bytes>", array, extension=extension))
+
+    def test_signal_on_a_later_slice_survives(self):
+        stack = np.zeros((5, 32, 32), dtype=np.uint8)
+        stack[3, 10:20, 10:20] = 200  # nothing at all on page 0
+        loaded = preprocessing.load_image(self.encode(stack))
+        assert loaded.shape == (32, 32)
+        assert loaded.max() == 200, "z-stack collapsed to its first slice"
+
+    def test_projection_takes_the_maximum_across_slices(self):
+        # 5 slices, not 3 or 4: a leading axis of exactly 3 or 4 is ambiguous
+        # with colour, and TIFF writers store it as component planes rather
+        # than as pages.
+        stack = np.zeros((5, 16, 16), dtype=np.uint8)
+        stack[0, 5, 5] = 10
+        stack[3, 5, 5] = 250
+        assert preprocessing.load_image(self.encode(stack))[5, 5] == 250
+
+    def test_a_four_plane_tiff_is_read_as_colour_not_as_pages(self):
+        """Documents a real TIFF ambiguity rather than pretending it away.
+
+        A uint8 array with a leading axis of 3 or 4 is written by TIFF as
+        colour component planes, so it reads back as one colour image. That is
+        the file's own declaration and the loader should honour it rather than
+        guess that the user meant a z-stack.
+        """
+        planes = np.zeros((4, 16, 16), dtype=np.uint8)
+        planes[2, 5, 5] = 250
+        loaded = preprocessing.load_image(self.encode(planes))
+        assert loaded.shape == (16, 16, 4)
+        # Still usable: channel selection reaches the data.
+        assert preprocessing.select_channel(loaded, "blue").max() > 0
+
+    def test_multipage_colour_tiff_keeps_its_channels(self):
+        stack = np.zeros((3, 16, 24, 3), dtype=np.uint8)
+        stack[1, ..., 1] = 180
+        loaded = preprocessing.load_image(self.encode(stack))
+        assert loaded.shape == (16, 24, 3)
+        assert loaded[..., 1].max() == 180
+
+    @pytest.mark.parametrize(
+        "array,extension,expected",
+        [
+            (np.full((16, 24), 7, np.uint8), ".png", (16, 24)),
+            (np.full((16, 24, 3), 7, np.uint8), ".png", (16, 24, 3)),
+            (np.full((16, 24, 4), 7, np.uint8), ".png", (16, 24, 4)),
+            (np.full((16, 24), 7, np.uint8), ".tiff", (16, 24)),
+            (np.full((16, 24), 777, np.uint16), ".tiff", (16, 24)),
+        ],
+    )
+    def test_single_frame_formats_keep_their_shape(self, array, extension, expected):
+        """Requesting all frames must not add a spurious axis to normal images."""
+        assert preprocessing.load_image(self.encode(array, extension)).shape == expected
+
+    def test_narrow_image_is_not_mistaken_for_a_colour_image(self):
+        # A 3-pixel-wide grayscale image has a trailing dimension of 3, which a
+        # shape-based guess would read as RGB.
+        narrow = np.full((32, 3), 7, dtype=np.uint8)
+        assert preprocessing.load_image(self.encode(narrow, ".png")).shape == (32, 3)
+
+    def test_stack_survives_the_full_prepare_pipeline(self):
+        stack = np.zeros((4, 40, 40), dtype=np.uint8)
+        stack[2, 12:28, 12:28] = 220
+        prepared = preprocessing.prepare(self.encode(stack))
+        assert prepared.analysis.shape == (40, 40)
+        assert prepared.intensity.max() > 0
 
 
 class TestChannelSelection:

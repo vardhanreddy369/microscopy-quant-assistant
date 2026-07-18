@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 
 import imageio.v3 as iio
-import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

@@ -12,6 +12,7 @@ images into object-level quantitative measurements.
 - Separation of touching objects using a distance-transform watershed
 - Cell counting
 - Area, shape, and intensity measurements per object
+- Multi-page TIFF and z-stack input, flattened by maximum intensity projection
 - Batch analysis of many images into a single CSV
 - CSV and annotated-image export
 
@@ -83,6 +84,12 @@ looking for.
 
 Integer images are converted against their dtype range rather than their own
 observed maximum, for the same reason: a dim image must stay dim.
+
+Multi-page files are read in full and flattened by maximum intensity
+projection. This matters more than it sounds: image readers return only the
+first page of a multi-page file by default, so a confocal z-stack would
+otherwise be analysed as its first slice alone — often the most out-of-focus
+one — and report a plausible count with no warning.
 
 ### Measurements
 
@@ -245,7 +252,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      101 tests
+tests/                      112 tests
 outputs/                    Generated results
 ```
 
@@ -255,7 +262,8 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-101 tests covering image loading and bit-depth handling, channel selection,
+112 tests covering image loading, multi-page and bit-depth handling, channel
+selection,
 thresholding, watershed separation, measurement correctness, counting accuracy
 against ground truth, the scoring metrics themselves, and the interface driven
 headlessly including the empty-result and batch paths.

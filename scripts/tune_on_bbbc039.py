@@ -79,8 +79,7 @@ def main() -> int:
         print("  (not in the search grid)")
 
     best_ap, best_f1, _, _, best = results[0]
-    print(f"\nBest: {{k: best[k] for k in GRID}}".replace("{k: best[k] for k in GRID}",
-                                                          str({k: best[k] for k in GRID})))
+    print(f"\nBest: {({key: best[key] for key in GRID})}")
     print(f"  training AP={best_ap:.4f}  F1@50={best_f1:.4f}")
     print("\nNow confirm on the held-out test split, e.g.:")
     print(f"  python scripts/validate.py --split test "

@@ -25,6 +25,26 @@ class ImageLoadError(ValueError):
     """Raised when an input cannot be interpreted as a 2-D image."""
 
 
+def _read_all_frames(source) -> tuple[np.ndarray, bool]:
+    """Read every frame in a file, not just the first.
+
+    ``imageio.imread`` returns only page 0 of a multi-page file. For microscopy
+    that is a silent data-loss bug: a confocal z-stack would be analysed as its
+    first slice alone, which is often the most out-of-focus one, and the user
+    would see a plausible count with no warning.
+
+    ``index=...`` asks for every frame and always returns a leading frame axis,
+    including for single-frame formats, so the caller can collapse it
+    explicitly rather than having to guess whether axis 0 is frames or rows.
+
+    Returns ``(array, has_frame_axis)``.
+    """
+    try:
+        return np.asarray(iio.imread(source, index=...)), True
+    except Exception:  # noqa: BLE001 - plugin may not support frame indexing
+        return np.asarray(iio.imread(source)), False
+
+
 def load_image(source) -> np.ndarray:
     """Load an image from a path, raw bytes, file-like object, or array.
 
@@ -33,14 +53,20 @@ def load_image(source) -> np.ndarray:
     2-D object counting.
     """
     if isinstance(source, np.ndarray):
-        image = source
+        image = np.asarray(source)
     else:
         if hasattr(source, "read"):
             source = source.read()
         try:
-            image = iio.imread(source)
+            image, has_frame_axis = _read_all_frames(source)
         except Exception as exc:  # noqa: BLE001 - surfaced to the user as-is
             raise ImageLoadError(f"Could not read the image: {exc}") from exc
+
+        if has_frame_axis:
+            # Axis 0 is known to be frames here, so collapse it directly instead
+            # of inferring from the shape, which would misread a 3-pixel-wide
+            # image as a colour image.
+            image = image[0] if image.shape[0] == 1 else image.max(axis=0)
 
     image = np.asarray(image)
 
