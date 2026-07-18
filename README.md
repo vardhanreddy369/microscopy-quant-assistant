@@ -36,6 +36,13 @@ today.
 ## Quick start
 
 ```bash
+./run_demo.sh
+```
+
+That sets up the environment on first run and opens the app in your browser.
+Equivalent manual steps:
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
