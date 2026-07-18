@@ -7,3 +7,6 @@ __pycache__/
 # Analysis outputs are regenerated on demand.
 outputs/*
 !outputs/.gitkeep
+
+# Validation data is fetched on demand, not committed.
+validation_data/
