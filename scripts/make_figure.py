@@ -27,12 +27,21 @@ def main() -> int:
     ASSETS.mkdir(parents=True, exist_ok=True)
 
     prepared = preprocessing.prepare(SAMPLE_DIR / SAMPLE)
+    # Every shipped default is passed explicitly. Omitting one silently used
+    # segment()'s own default instead, so the published figure was generated
+    # with different parameters than the application uses.
     result = segmentation.segment(
         prepared.analysis,
+        threshold_method=DEFAULTS["threshold_method"],
         min_size=DEFAULTS["min_size"],
         smoothing_sigma=DEFAULTS["smoothing_sigma"],
+        cleanup_radius=DEFAULTS["cleanup_radius"],
+        fill_holes=DEFAULTS["fill_holes"],
+        separate_touching=DEFAULTS["separate_touching"],
         peak_min_distance=DEFAULTS["peak_min_distance"],
-        separate_touching=True,
+        seeding=DEFAULTS["seeding"],
+        seed_depth=DEFAULTS["seed_depth"],
+        background_radius=DEFAULTS["background_radius"],
     )
     frame = measurements.measure(result.labels, prepared.intensity)
 

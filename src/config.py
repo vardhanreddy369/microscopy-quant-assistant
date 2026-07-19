@@ -68,7 +68,7 @@ DEFAULTS = {
     # Off by default. It is ~10x slower than the rest of the pipeline and on the
     # evenly illuminated BBBC039 benchmark it is worth at most +0.004 F1, inside
     # noise. It matters a great deal on unevenly lit images: it takes the
-    # difficult synthetic sample from 72 to 90 of 110 objects.
+    # difficult synthetic sample from 70 to 90 of 110 objects.
     "background_radius": 0,
     "pixel_size_um": None,
 }
@@ -123,7 +123,7 @@ SAMPLE_CAVEATS = {
         "thresholds bright objects on a dark background; on brightfield stained "
         "tissue it instead outlines whole tissue regions and cuts them into "
         "arbitrary watershed polygons. Here roughly 58% of the image is treated "
-        "as foreground and the average 'object' is about 89 pixels across, "
+        "as foreground and the average 'object' is about 110 pixels across, "
         "where a real nucleus would be 10-20. Brightfield histology needs stain "
         "colour deconvolution, which this tool does not do. The sample is kept "
         "to show what running a method outside its domain looks like."

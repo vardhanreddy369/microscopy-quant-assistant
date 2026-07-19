@@ -343,7 +343,7 @@ than asserted.
 | --- | ---: | ---: | --- |
 | `synthetic_easy.png` | 32 | **32** | Well separated nuclei |
 | `synthetic_moderate.png` | 34 | **34** | Touching nuclei; the case watershed addresses |
-| `synthetic_difficult.png` | 110 | 72 | **Known failure case (65% recall)** |
+| `synthetic_difficult.png` | 110 | 70 | **Known failure case (64% recall)** |
 
 The difficult sample is dense, deeply overlapping, noisy, and unevenly
 illuminated. It is included on purpose, and taking it apart showed that its
@@ -362,7 +362,7 @@ against the output individually:
 
 That is not overlap. That is a single global threshold failing on an unevenly
 lit field, and it is fixable. Turning on illumination correction takes the
-detected count from **72 to 90 of 110**.
+detected count from **70 to 90 of 110**.
 
 What remains after that is the genuine limit: 90 detected objects still contain
 more than 90 nuclei, because nuclei overlapping past a certain point share one
@@ -370,7 +370,7 @@ distance-transform peak and cannot be separated. A test asserts the uncorrected
 result stays in its documented range so this claim cannot silently drift.
 
 On the demonstration image (`public_human_mitosis.png`, 512×512) the pipeline
-detects 260 objects in roughly 0.1 seconds. There is no ground truth for that
+detects 290 objects in roughly 0.1 seconds. There is no ground truth for that
 image, so the number is a result, not an accuracy claim.
 
 ## Sample data

@@ -26,7 +26,7 @@ conversation about a real need could turn into.
 ## The run (about 90 seconds)
 
 1. The app is already showing the real fluorescence image, analysed.
-2. Point at the count: **260 objects detected**.
+2. Point at the count: **290 objects detected**.
 3. Zoom the annotated panel. Point at a pair of touching nuclei with a line
    between them.
    > "Those two nuclei are touching. A simple threshold counts them as one
@@ -45,7 +45,7 @@ Do this **before** he asks. It is the most credible thing you will say.
 Switch to **Synthetic - difficult (known failure case)**.
 
 > "I also want to show you where it fails. This image is dense and overlapping,
-> and it finds about 72 of the 110 objects that are actually there. I know that
+> and it finds about 70 of the 110 objects that are actually there. I know that
 > number because I generated the image, so I know the truth. The method can't
 > separate objects that overlap past a certain point, and no amount of tuning
 > fixes it. I'd rather show you that than pretend it always works."
