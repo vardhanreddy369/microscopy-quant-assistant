@@ -26,7 +26,9 @@ interpretation of what it measures.
 
 It *has* been scored against a public expert-annotated dataset (see
 [Validation](#validation)): F1 = 0.899 at IoU 0.50 on 5,720 hand-annotated
-nuclei it was not tuned on. That establishes the method works on one public
+nuclei it was not tuned on, which is 0.770 when averaged across stricter
+thresholds the way the benchmark's own authors report it — below the published
+baselines on that dataset. That establishes the method works on one public
 benchmark of Hoechst-stained nuclei. It establishes nothing about any
 particular laboratory's images, stains, magnifications, or cell types. Using it
 for real work would still need representative images from the lab in question,
@@ -156,6 +158,37 @@ Reproduce with:
 python scripts/fetch_validation_data.py     # 76 MB, CC0
 python scripts/validate.py --split test
 ```
+
+### How that compares to published methods
+
+BBBC039 was released with [Caicedo et al. 2019, *Cytometry A*](https://onlinelibrary.wiley.com/doi/full/10.1002/cyto.a.23863),
+which benchmarks several methods on it. Their headline F1 is **averaged across
+increasingly stringent IoU thresholds**, not measured at IoU 0.50 alone. Scored
+that way, on the same held-out data:
+
+| Method | Mean F1 across IoU thresholds |
+| --- | ---: |
+| U-Net (Caicedo et al.) | 0.898 |
+| DeepCell (Caicedo et al.) | 0.858 |
+| Random forest (Caicedo et al.) | 0.840 |
+| CellProfiler, advanced (Caicedo et al.) | 0.811 |
+| CellProfiler, basic (Caicedo et al.) | 0.790 |
+| **This project (classical watershed)** | **0.770** |
+
+So this pipeline is **last on that list**, a little below a basic CellProfiler
+configuration and 0.13 below U-Net. That is the honest position, and it is
+roughly where a from-scratch classical watershed should land: the deep-learning
+methods learn object boundaries, while a distance transform can only assume
+them.
+
+The 0.899 figure above is F1 at IoU 0.50 only, the most permissive threshold.
+It is a real number and it is reported as such, but it must not be set beside
+Caicedo's 0.898 as though they measure the same thing. They do not.
+
+Modern practice has moved further still: [StarDist](https://github.com/stardist/stardist)
+models nuclei as star-convex polygons specifically to stop pixel-based methods
+merging densely packed round nuclei, which is exactly this pipeline's dominant
+error mode (258 merges against 87 splits on the test split).
 
 These are object-level metrics, not counting metrics. That distinction matters:
 a method can produce the right count while splitting one nucleus and merging
