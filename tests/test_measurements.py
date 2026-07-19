@@ -33,7 +33,13 @@ class TestCircularity:
         disk = measurements.measure(
             labelled_disk(radius=40), labelled_disk(radius=40).astype(np.float32)
         )
-        assert bar.loc[0, "circularity"] < disk.loc[0, "circularity"]
+        # Pull the scalars out through numpy rather than pandas .loc: a pandas
+        # scalar is typed as a broad union that makes strict type checkers
+        # explode a simple `<` into every possible type pairing. .to_numpy()
+        # lands in concrete numeric territory.
+        bar_circularity = bar["circularity"].to_numpy()[0]
+        disk_circularity = disk["circularity"].to_numpy()[0]
+        assert bar_circularity < disk_circularity
 
     def test_never_exceeds_one(self):
         # Discretisation can push the raw formula above 1 for tiny objects.
