@@ -5,5 +5,40 @@
     "percent_positive": 29.55,
     "nuclear_channel": "blue",
     "marker_channel": "green"
+  },
+  "synthetic_marker_10pct.png": {
+    "total_nuclei": 50,
+    "marker_positive": 5,
+    "percent_positive": 10.0,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
+  },
+  "synthetic_marker_30pct.png": {
+    "total_nuclei": 50,
+    "marker_positive": 15,
+    "percent_positive": 30.0,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
+  },
+  "synthetic_marker_50pct.png": {
+    "total_nuclei": 50,
+    "marker_positive": 25,
+    "percent_positive": 50.0,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
+  },
+  "synthetic_marker_70pct.png": {
+    "total_nuclei": 50,
+    "marker_positive": 35,
+    "percent_positive": 70.0,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
+  },
+  "synthetic_marker_00pct.png": {
+    "total_nuclei": 48,
+    "marker_positive": 0,
+    "percent_positive": 0.0,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
   }
 }

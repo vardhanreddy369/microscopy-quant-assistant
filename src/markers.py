@@ -23,15 +23,14 @@ import numpy as np
 import pandas as pd
 from skimage.measure import regionprops_table
 
+from . import positivity
 from .measurements import INTENSITY_SCALE
 
-THRESHOLD_METHODS = ("otsu", "manual")
-
-# Deliberately no "is this split real?" threshold is exported. With a few dozen
-# objects, sparse sampling puts a sizeable gap in a single population by chance,
-# so any fixed cut-off would be a number that cannot be defended. The honest
-# diagnostic is the intensity histogram with the threshold drawn on it, which
-# the application shows; a researcher can see one hump or two immediately.
+# "mixture" is the recommended method: a two-component model that also reports
+# whether a positive population exists at all (see src/positivity.py). "otsu" is
+# the exact per-object split, kept as a simpler alternative; "manual" takes the
+# threshold from the researcher, ideally a negative control.
+THRESHOLD_METHODS = ("mixture", "otsu", "manual")
 
 
 def _exact_otsu(values: np.ndarray) -> float:
@@ -99,6 +98,11 @@ class MarkerResult:
     frame: pd.DataFrame
     threshold: float
     method: str
+    # Populated by the mixture method: whether a distinct positive population
+    # was found at all, the strength of that evidence, and any explanation.
+    bimodal: bool = True
+    delta_bic: float = float("nan")
+    notes: tuple[str, ...] = ()
 
     @property
     def total(self) -> int:
@@ -201,13 +205,27 @@ def measure_marker(
         return MarkerResult(frame=empty, threshold=float("nan"), method=method)
 
     frame = _object_means(labels, marker_plane)
+
+    if method == "mixture":
+        # The mixture model both sets the threshold and decides whether a
+        # positive population exists. When it does not, every object is negative.
+        result = positivity.call_by_mixture(frame["marker_mean"].to_numpy())
+        frame["marker_positive"] = result.positive
+        return MarkerResult(
+            frame=frame,
+            threshold=result.threshold,
+            method="mixture",
+            bimodal=result.bimodal,
+            delta_bic=result.delta_bic,
+            notes=tuple(result.notes),
+        )
+
     threshold = choose_threshold(
         frame["marker_mean"].to_numpy(),
         method=method,
         manual_value=manual_threshold,
     )
     frame["marker_positive"] = frame["marker_mean"] >= threshold
-
     return MarkerResult(frame=frame, threshold=threshold, method=method)
 
 
@@ -220,6 +238,7 @@ def summarize(result: MarkerResult) -> dict[str, float | int]:
             "mean_positive_intensity": float("nan"),
             "mean_negative_intensity": float("nan"),
             "separation": float("nan"),
+            "bimodal": result.bimodal, "delta_bic": result.delta_bic,
         }
 
     frame = result.frame
@@ -234,4 +253,6 @@ def summarize(result: MarkerResult) -> dict[str, float | int]:
         "mean_positive_intensity": float(positives.mean()) if len(positives) else float("nan"),
         "mean_negative_intensity": float(negatives.mean()) if len(negatives) else float("nan"),
         "separation": separation(frame),
+        "bimodal": result.bimodal,
+        "delta_bic": result.delta_bic,
     }

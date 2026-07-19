@@ -1,0 +1,41 @@
+1. ACCURACY — mixture method against known fractions
+   sample                          true%  measured   error     ΔBIC
+   synthetic_marker_00pct.png        0.0      none    +0.0    -10.0
+   synthetic_marker_10pct.png       10.0     10.0%    +0.0    181.4
+   synthetic_marker_30pct.png       30.0     30.0%    +0.0    168.9
+   synthetic_marker_pair.png        29.6     29.5%    -0.0    150.7
+   synthetic_marker_50pct.png       50.0     50.0%    +0.0    144.0
+   synthetic_marker_70pct.png       70.0     70.0%    +0.0    139.9
+   mean absolute error over the positive series: 0.00 points
+   all-negative image correctly reported as no population: True
+
+2. DETERMINISM — the same image, analysed ten times
+   distinct thresholds across 10 runs: 1 (identical every time)
+
+3. BIAS — how far a human threshold can move the answer
+   The reproducibility problem, quantified. Two analysts pick different
+   but individually reasonable cut-offs on the same image.
+   true fraction                         : 30.0%
+   mixture (objective, reproducible)     : 30.0%
+   manual threshold at the 40th pct      : 60.0%
+   manual threshold at the 60th pct      : 40.0%
+   spread between two 'reasonable' manual calls: 20.0 points
+   The mixture removes that spread: one image gives one number.
+
+4. EXAMPLE REPRODUCIBILITY REPORT
+   MARKER POSITIVITY — REPRODUCIBILITY REPORT
+   ============================================
+   image                   : synthetic_marker_pair.png
+   nuclear channel         : blue
+   marker channel          : green
+   segmentation            : classical watershed, h-maxima seeding
+   method                  : mixture
+   objects measured        : 44
+   marker-positive         : 13
+   percent positive        : 29.55%
+   threshold (0-255)       : 42.983
+   distinct populations    : yes
+   bimodality ΔBIC         : 150.66
+   negative component      : mean 21.57, sd 2.65, weight 0.705
+   positive component      : mean 119.88, sd 9.86, weight 0.295
+   note: two populations resolved (ΔBIC 150.7); negative mean 21.6, positive mean 119.9.

@@ -10,8 +10,10 @@ images into object-level quantitative measurements.
 - Fluorescence-channel selection (grayscale, red, green, blue)
 - Two segmentation engines: a classical watershed, and an optional pretrained
   model (Cellpose) that is markedly more accurate on touching nuclei
-- **Percent-marker-positive quantification** from a two-channel image, which is
-  the shape of a TUNEL, cleaved-caspase-3 or Ki67 readout
+- **Reproducible percent-marker-positive quantification** from a two-channel
+  image (TUNEL, cleaved-caspase-3, Ki67): an objective mixture-model threshold,
+  a test for whether a positive population exists at all, and an auto-generated
+  reproducibility report
 - Cell/nucleus segmentation by classical image processing
 - Separation of touching objects using a distance-transform watershed
 - Optional correction of uneven illumination before thresholding
@@ -291,6 +293,57 @@ built over many years, not through one idea. This is precisely why the Cellpose
 engine exists in this tool: when the classical approach is exhausted, the honest
 move is to offer a better method rather than to keep tuning a worse one.
 
+### Reproducible marker-positivity — the methodological contribution
+
+The percent-positive call is one of the least reproducible steps in the imaging
+literature. A [systematic review of ~9,000 immunofluorescence papers
+(Jiang et al., *Front. Cell. Neurosci.* 2023)](https://www.frontiersin.org/journals/cellular-neuroscience/articles/10.3389/fncel.2023.1188858/full)
+found **fewer than 10% report their thresholding at all**, and manual thresholds
+carry documented bias. `src/positivity.py` addresses that directly.
+
+**An objective threshold.** A two-component Gaussian mixture is fitted to the
+per-object marker intensities by a deterministic EM (no random restarts, so the
+same image always gives the same number). The threshold is the crossover where
+an object is equally likely to belong to either population.
+
+**A test for whether a positive population exists at all.** This is the question
+a percentage hides, and the one an earlier version of this tool could not answer
+honestly. It is now decided by two independent, established criteria that must
+agree: model selection by **BIC** (Kass & Raftery's ΔBIC > 10 for very strong
+evidence) *and* separation by **Ashman's D** (> 2 for two distinct populations).
+BIC is used rather than a likelihood-ratio test because the number of mixture
+components is a non-regular testing problem — under the null the extra
+component's parameters are unidentifiable, so the likelihood ratio lacks its
+usual distribution. Both criteria are required because either alone can be
+fooled by a single skewed or non-Gaussian population.
+
+**A negative-control mode.** When a control image is supplied, the threshold is
+taken from a high percentile of the control's intensities — the field's gold
+standard — and the report records which control was used.
+
+**A reproducibility report.** Every run can emit a plain-text record — method,
+threshold, fitted populations, evidence, settings — complete enough to reproduce
+the number. That is the specific thing the review found missing.
+
+Validated on both axes (`python scripts/validate_positivity.py`):
+
+| Axis | Result |
+| --- | --- |
+| **Accuracy** across 10–70% known fractions | **0.00 points** mean absolute error |
+| All-negative image (0% true) | correctly reported as **no population** |
+| **Determinism** (same image ×10) | **identical** threshold every time |
+| **Bias** vs manual thresholding | two "reasonable" manual cut-offs differ by **20 points** on one image; the mixture removes that spread |
+
+**What this is, and is not.** This is a genuine methodological contribution — an
+objective, self-assessing, self-documenting positivity call for standard
+fluorescence, an area where the nearest tool
+([GammaGateR](https://pmc.ncbi.nlm.nih.gov/articles/PMC10541135/)) targets
+specialised multiplexed imaging. It is *not* a new segmentation algorithm and
+does not claim to beat a learned segmenter. The contribution is in the
+quantification and its reproducibility, which is where the field has a
+documented, open gap — and which is exactly the readout a marker-based lab
+depends on.
+
 ### Percent-marker-positive, against a known fraction
 
 Counting objects is rarely the endpoint of a fluorescence experiment. The
@@ -430,6 +483,7 @@ src/
   export.py                 CSV and PNG serialisation
   validation.py             IoU matching and segmentation metrics
   markers.py                Two-channel percent-positive quantification
+  positivity.py             Mixture-model positivity call + bimodality test
   learned_segmentation.py   Optional Cellpose engine
 scripts/
   run_pipeline.py           Command-line pipeline
@@ -441,7 +495,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      225 tests
+tests/                      254 tests
 outputs/                    Generated results
 ```
 
@@ -451,7 +505,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-225 tests covering image loading, multi-page and bit-depth handling, channel
+254 tests covering image loading, multi-page and bit-depth handling, channel
 selection, thresholding, watershed separation, measurement correctness,
 percent-marker-positive quantification, counting accuracy against ground truth,
 the scoring metrics themselves, and the interface driven headlessly including

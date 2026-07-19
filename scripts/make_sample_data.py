@@ -254,11 +254,18 @@ def make_marker_pair(size: int = 512, seed: int = 41,
         rng.choice(len(placed), size=min(positive, len(placed)), replace=False).tolist()
     )
 
+    # Cell-to-cell brightness varies roughly normally, not uniformly. A uniform
+    # spread is not physical and is pathologically easy to split into two
+    # Gaussian components, which would make an all-negative field look bimodal.
+    def clipped_normal(mean: float, sd: float, lo: float, hi: float) -> float:
+        return float(np.clip(rng.normal(mean, sd), lo, hi))
+
     nuclear = [n for n in placed]
     marker = [
         Nucleus(
             n.y, n.x, n.radius * 0.82,
-            rng.uniform(0.62, 0.88) if i in positive_index else rng.uniform(0.06, 0.15),
+            clipped_normal(0.75, 0.06, 0.55, 0.95) if i in positive_index
+            else clipped_normal(0.10, 0.02, 0.03, 0.20),
             n.elongation, n.angle,
         )
         for i, n in enumerate(placed)
@@ -370,21 +377,42 @@ def main() -> None:
     print(f"  wrote synthetic_marker_pair.png  {marker_positive}/{marker_total} "
           f"marker-positive ({100 * marker_positive / marker_total:.1f}%)")
 
+    # A validation series at known positive fractions, plus an all-negative
+    # image. Together they test both accuracy (does the measured fraction match
+    # the true one across the range) and the bimodality test (does it call "no
+    # population" when there genuinely is none).
+    marker_series: dict[str, dict] = {}
+    for index, (count, positive) in enumerate(
+        [(50, 5), (50, 15), (50, 25), (50, 35), (48, 0)]
+    ):
+        image, total, pos = make_marker_pair(
+            seed=61 + index * 4, count=count, positive=positive
+        )
+        name = f"synthetic_marker_{round(100 * positive / count):02d}pct.png"
+        iio.imwrite(SAMPLE_DIR / name, image)
+        marker_series[name] = {
+            "total_nuclei": total,
+            "marker_positive": pos,
+            "percent_positive": round(100 * pos / total, 2),
+            "nuclear_channel": "blue",
+            "marker_channel": "green",
+        }
+        print(f"  wrote {name}  {pos}/{total} positive")
+
     save_real_references()
 
+    marker_truth = {
+        "synthetic_marker_pair.png": {
+            "total_nuclei": marker_total,
+            "marker_positive": marker_positive,
+            "percent_positive": round(100 * marker_positive / marker_total, 2),
+            "nuclear_channel": "blue",
+            "marker_channel": "green",
+        },
+        **marker_series,
+    }
     (SAMPLE_DIR / "marker_ground_truth.json").write_text(
-        json.dumps(
-            {
-                "synthetic_marker_pair.png": {
-                    "total_nuclei": marker_total,
-                    "marker_positive": marker_positive,
-                    "percent_positive": round(100 * marker_positive / marker_total, 2),
-                    "nuclear_channel": "blue",
-                    "marker_channel": "green",
-                }
-            },
-            indent=2,
-        ) + "\n"
+        json.dumps(marker_truth, indent=2) + "\n"
     )
     (SAMPLE_DIR / "ground_truth.json").write_text(
         json.dumps(ground_truth, indent=2) + "\n"

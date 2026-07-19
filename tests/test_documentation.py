@@ -223,3 +223,55 @@ class TestBenchmarkClaims:
         assert summary["f1_at_50"] > documented, (
             "mean F1 across thresholds must be below F1 at the loosest threshold"
         )
+
+
+class TestPositivityClaims:
+    """The reproducibility figures in the marker-positivity section must hold."""
+
+    @staticmethod
+    def marker_intensities(filename):
+        from src import measurements, preprocessing, segmentation
+        nuclear = preprocessing.prepare(SAMPLE_DIR / filename, channel="blue")
+        marker = preprocessing.prepare(SAMPLE_DIR / filename, channel="green")
+        result = segmentation.segment(
+            nuclear.analysis,
+            threshold_method=DEFAULTS["threshold_method"],
+            min_size=DEFAULTS["min_size"],
+            smoothing_sigma=DEFAULTS["smoothing_sigma"],
+            cleanup_radius=DEFAULTS["cleanup_radius"],
+            separate_touching=True,
+            peak_min_distance=DEFAULTS["peak_min_distance"],
+            seeding=DEFAULTS["seeding"],
+            seed_depth=DEFAULTS["seed_depth"],
+        )
+        return measurements.measure(result.labels, marker.intensity)["mean_intensity"].to_numpy()
+
+    def test_accuracy_claim_holds(self):
+        """README: 0.00 points mean absolute error across the known fractions."""
+        from src import positivity
+
+        documented = claim(r"\*\*([\d.]+) points\*\* mean absolute error",
+                           README, "positivity accuracy")
+        truth = json.loads((SAMPLE_DIR / "marker_ground_truth.json").read_text())
+        errors = []
+        for name, meta in truth.items():
+            if meta["percent_positive"] == 0:
+                continue
+            result = positivity.call_by_mixture(self.marker_intensities(name))
+            errors.append(abs(result.percent_positive - meta["percent_positive"]))
+        assert round(sum(errors) / len(errors), 2) == documented
+
+    def test_all_negative_is_reported_as_no_population(self):
+        from src import positivity
+
+        result = positivity.call_by_mixture(
+            self.marker_intensities("synthetic_marker_00pct.png")
+        )
+        assert not result.bimodal
+
+    def test_determinism_claim_holds(self):
+        from src import positivity
+
+        values = self.marker_intensities("synthetic_marker_pair.png")
+        thresholds = {positivity.call_by_mixture(values).threshold for _ in range(5)}
+        assert len(thresholds) == 1, "the mixture call must be identical every run"
