@@ -441,7 +441,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      198 tests
+tests/                      225 tests
 outputs/                    Generated results
 ```
 
@@ -451,11 +451,11 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-198 tests covering image loading, multi-page and bit-depth handling, channel
-selection,
-thresholding, watershed separation, measurement correctness, counting accuracy
-against ground truth, the scoring metrics themselves, and the interface driven
-headlessly including the empty-result and batch paths.
+225 tests covering image loading, multi-page and bit-depth handling, channel
+selection, thresholding, watershed separation, measurement correctness,
+percent-marker-positive quantification, counting accuracy against ground truth,
+the scoring metrics themselves, and the interface driven headlessly including
+the empty-result, batch and marker paths.
 
 The scoring code is tested against cases with hand-computable answers, because
 a bug there would produce authoritative-looking but meaningless accuracy
@@ -467,3 +467,10 @@ recomputes it from the pipeline, so a change that shifts a result fails
 immediately and names the file to update. This exists because the ordinary tests
 assert ranges while the documentation asserts values: three separate times, a
 change moved a published figure while every test stayed green.
+
+`tests/test_claims.py` does the same for the sentences rather than the figures.
+Statements such as "runs with no network connection", "off by default", "no
+scale is ever inferred from the file" and "flagged rather than deleted" are
+commitments a reader relies on, and each is a property of this code that can be
+asserted. Claims about the world — that the method is not validated for
+brightfield histology, for instance — cannot be tested and still need a human.
