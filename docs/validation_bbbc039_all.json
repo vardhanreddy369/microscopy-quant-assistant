@@ -6,20 +6,21 @@
     "smoothing_sigma": 0.6,
     "cleanup_radius": 0,
     "peak_min_distance": 9,
-    "separate_touching": true
+    "separate_touching": true,
+    "engine": "classical"
   },
   "summary": {
     "images": 200,
     "true_objects": 23617,
-    "predicted_objects": 21025,
-    "f1_at_50": 0.8935531562205994,
-    "precision_at_50": 0.9486325802615934,
-    "recall_at_50": 0.8445187788457467,
-    "f1_at_75": 0.8301151382106536,
-    "average_precision": 0.6453046079870974,
-    "mean_matched_iou": 0.8861558249345278,
-    "split_errors": 365,
-    "merge_errors": 1035,
-    "count_mape": 0.10992216687923445
+    "predicted_objects": 20952,
+    "f1_at_50": 0.8959590746931724,
+    "precision_at_50": 0.9529400534555174,
+    "recall_at_50": 0.845407968836008,
+    "f1_at_75": 0.8348403598914044,
+    "average_precision": 0.6498826317643949,
+    "mean_matched_iou": 0.887680456785176,
+    "split_errors": 285,
+    "merge_errors": 1019,
+    "count_mape": 0.1119123425714908
   }
 }

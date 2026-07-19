@@ -148,13 +148,13 @@ come from the **held-out test split**, which was never used for tuning.
 
 | Metric | Test split (50 images, 5,720 nuclei) | All 200 images (23,617 nuclei) |
 | --- | ---: | ---: |
-| **F1 @ IoU 0.50** | **0.899** | 0.894 |
-| Precision @ 0.50 | 0.951 | 0.949 |
+| **F1 @ IoU 0.50** | **0.901** | 0.896 |
+| Precision @ 0.50 | 0.955 | 0.953 |
 | Recall @ 0.50 | 0.853 | 0.845 |
-| F1 @ IoU 0.75 | 0.838 | 0.830 |
-| Average precision (IoU 0.50–0.95) | 0.653 | 0.645 |
-| Mean IoU of matched objects | 0.886 | 0.886 |
-| Count error (MAPE) | 10.9% | 11.0% |
+| F1 @ IoU 0.75 | 0.841 | 0.835 |
+| Average precision (IoU 0.50–0.95) | 0.656 | 0.650 |
+| Mean IoU of matched objects | 0.887 | 0.888 |
+| Count error (MAPE) | 11.0% | 11.2% |
 
 Reproduce with:
 
@@ -441,7 +441,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      185 tests
+tests/                      198 tests
 outputs/                    Generated results
 ```
 
@@ -451,7 +451,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-185 tests covering image loading, multi-page and bit-depth handling, channel
+198 tests covering image loading, multi-page and bit-depth handling, channel
 selection,
 thresholding, watershed separation, measurement correctness, counting accuracy
 against ground truth, the scoring metrics themselves, and the interface driven
@@ -460,3 +460,10 @@ headlessly including the empty-result and batch paths.
 The scoring code is tested against cases with hand-computable answers, because
 a bug there would produce authoritative-looking but meaningless accuracy
 numbers.
+
+`tests/test_documentation.py` checks that the numbers printed in this README and
+in DEMO.md are still true. It parses each claim out of the document and
+recomputes it from the pipeline, so a change that shifts a result fails
+immediately and names the file to update. This exists because the ordinary tests
+assert ranges while the documentation asserts values: three separate times, a
+change moved a published figure while every test stayed green.
