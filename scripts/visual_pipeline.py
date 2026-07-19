@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import termimage
-from src import measurements, positivity, preprocessing, segmentation, visualization
+from src import markers, measurements, preprocessing, segmentation, visualization
 from src.config import DEFAULTS, SAMPLE_DIR
 
 RULE = "=" * 70
@@ -77,25 +77,26 @@ def main() -> int:
     nuclear = preprocessing.prepare(SAMPLE_DIR / "synthetic_marker_pair.png", channel="blue")
     marker = preprocessing.prepare(SAMPLE_DIR / "synthetic_marker_pair.png", channel="green")
     seg = segment(nuclear.analysis)
-    marker_frame = measurements.measure(seg.labels, marker.intensity)
-    call = positivity.call_by_mixture(marker_frame["mean_intensity"].to_numpy())
-    marker_frame["marker_positive"] = call.positive
+    # measure_marker returns the frame the overlay and histogram both expect
+    # (marker_mean, marker_positive) plus the threshold and the bimodality verdict.
+    marker_result = markers.measure_marker(seg.labels, marker.intensity, method="mixture")
 
-    print(f"\n3. POSITIVITY — {call.n_positive} of {call.n_total} cells positive "
-          f"= {call.percent_positive:.1f}%")
+    print(f"\n3. POSITIVITY — {marker_result.positive} of {marker_result.total} cells "
+          f"positive = {marker_result.percent:.1f}%")
     print("   Left: nuclei (blue channel). Right: the call — amber positive, "
           "slate negative.\n")
     termimage.show_side_by_side(
         visualization.to_display_rgb(nuclear.analysis),
-        visualization.annotate_marker(marker.analysis, seg.labels, marker_frame),
-        labels=("nuclei", f"{call.percent_positive:.0f}% positive"),
-        cols=40,
+        visualization.annotate_marker(marker.analysis, seg.labels, marker_result.frame),
+        labels=("nuclei", f"{marker_result.percent:.0f}% positive"),
+        cols=44,
     )
 
     print("\n4. THE THRESHOLD IT LEARNED — two populations, split at "
-          f"{call.threshold:.0f}/255")
+          f"{marker_result.threshold:.0f}/255")
     termimage.show(
-        figure_to_rgb(visualization.marker_histogram(marker_frame, call.threshold)),
+        figure_to_rgb(visualization.marker_histogram(marker_result.frame,
+                                                     marker_result.threshold)),
         cols=64,
     )
 
