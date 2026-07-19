@@ -293,10 +293,10 @@ class TestBBBC013Claims:
         sys.path.insert(0, str(ROOT / "scripts"))
         import validate_bbbc013 as harness
 
-        documented = claim(r"\| Wortmannin \|[^|]+\|[^|]+\| \*\*([\d.]+)\*\* \|",
-                           README, "Wortmannin Spearman")
+        documented = claim(r"\| Wortmannin \| \*\*control-anchored\*\* \|[^|]+\| \*\*([\d.]+)\*\* \|",
+                           README, "Wortmannin anchored Spearman")
         result = harness.evaluate_drug("Wortmannin", "ABCD", harness.load_platemap())
-        assert round(result["spearman"], 2) == pytest.approx(documented, abs=0.02)
+        assert round(result["anchored_spearman"], 2) == pytest.approx(documented, abs=0.02)
 
     def test_ly294002_spearman_matches(self):
         self._skip_if_absent()
@@ -304,7 +304,7 @@ class TestBBBC013Claims:
         sys.path.insert(0, str(ROOT / "scripts"))
         import validate_bbbc013 as harness
 
-        documented = claim(r"\| LY294002 \|[^|]+\|[^|]+\| \*\*([\d.]+)\*\* \|",
-                           README, "LY294002 Spearman")
+        documented = claim(r"\| LY294002 \| \*\*control-anchored\*\* \|[^|]+\| \*\*([\d.]+)\*\* \|",
+                           README, "LY294002 anchored Spearman")
         result = harness.evaluate_drug("LY294002", "EFGH", harness.load_platemap())
-        assert round(result["spearman"], 2) == pytest.approx(documented, abs=0.02)
+        assert round(result["anchored_spearman"], 2) == pytest.approx(documented, abs=0.02)

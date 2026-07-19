@@ -77,18 +77,27 @@ class TestRealDoseResponse:
         return harness.evaluate_drug("LY294002", "EFGH", harness.load_platemap())
 
     def test_dose_response_is_strongly_positive_wortmannin(self, wortmannin):
-        assert wortmannin["spearman"] > 0.5
+        assert wortmannin["mixture_spearman"] > 0.5
 
     def test_dose_response_is_strongly_positive_ly294002(self, ly294002):
-        assert ly294002["spearman"] > 0.5
+        assert ly294002["mixture_spearman"] > 0.5
 
     def test_controls_separate_wortmannin(self, wortmannin):
         # The top dose must read far more positive than the negative control.
-        assert wortmannin["max_positive"] - wortmannin["negative"] > 25
+        assert wortmannin["mixture_max"] - wortmannin["mixture_negative"] > 25
 
     def test_controls_separate_ly294002(self, ly294002):
-        assert ly294002["max_positive"] - ly294002["negative"] > 25
+        assert ly294002["mixture_max"] - ly294002["mixture_negative"] > 25
 
     def test_top_dose_is_majority_positive(self, wortmannin, ly294002):
-        assert wortmannin["max_positive"] > 50
-        assert ly294002["max_positive"] > 50
+        assert wortmannin["mixture_max"] > 50
+        assert ly294002["mixture_max"] > 50
+
+    def test_control_anchoring_improves_the_dose_response(self, wortmannin, ly294002):
+        """Normalising to the plate's own negative controls must help, not hurt."""
+        assert wortmannin["anchored_spearman"] > wortmannin["mixture_spearman"]
+        assert ly294002["anchored_spearman"] > ly294002["mixture_spearman"]
+
+    def test_control_anchoring_pins_negatives_near_zero(self, wortmannin, ly294002):
+        assert wortmannin["anchored_negative"] < 3.0
+        assert ly294002["anchored_negative"] < 3.0
