@@ -344,6 +344,43 @@ quantification and its reproducibility, which is where the field has a
 documented, open gap — and which is exactly the readout a marker-based lab
 depends on.
 
+### Head-to-head against the alternatives
+
+A method only matters if it beats what a reviewer would otherwise reach for. The
+positivity call is benchmarked against four baselines on the synthetic marker
+series, where every image's true positive fraction is known
+(`python scripts/benchmark_methods.py`):
+
+| Method | Mean error, 10–70% positive | All-negative image (0% true) |
+| --- | ---: | ---: |
+| **Gaussian + gate (ours)** | **0.00 pts** | **0.0% — correct** |
+| Gaussian, no gate | 0.00 pts | 54.2% — false positives |
+| Gamma mixture, no gate | 0.00 pts | 70.8% — false positives |
+| k-means, no gate | 0.00 pts | 58.3% — false positives |
+| exact Otsu | 0.00 pts | 58.3% — false positives |
+
+The Gamma mixture is the distribution [GammaGateR](https://pmc.ncbi.nlm.nih.gov/articles/PMC10541135/)
+uses for marker gating; k-means and Otsu are the obvious simple splits.
+
+Two things fall out, and both are honest:
+
+**On a real positive population, every method ties at 0.00.** The choice of
+distribution — Gaussian, Gamma, k-means, Otsu — makes no measurable difference
+when there genuinely are two populations. The tool does *not* claim to threshold
+more accurately than the alternatives, because it does not.
+
+**On the all-negative image, only the gated method is correct.** Every ungated
+method splits one population in half and invents 54–71% positives. The decisive
+row is *Gaussian, no gate*: the shipped method's own distribution, with the
+bimodality test removed, fails exactly like the baselines. So the contribution
+is isolated — it is the **BIC + Ashman's D population test**, not the Gaussian
+assumption, and it is the one thing none of the standard alternatives do.
+
+That is a narrow claim, which is why it holds: the method is as accurate as the
+field's tools where they work, and uniquely refuses to report a positive
+fraction when there is no positive population — the failure mode the
+reproducibility literature is most worried about.
+
 ### Validated on real data (BBBC013)
 
 The synthetic validation above establishes per-cell accuracy. This one
@@ -537,6 +574,7 @@ src/
   validation.py             IoU matching and segmentation metrics
   markers.py                Two-channel percent-positive quantification
   positivity.py             Mixture-model positivity call + bimodality test
+  comparators.py            Baseline positivity methods for the head-to-head
   learned_segmentation.py   Optional Cellpose engine
 scripts/
   run_pipeline.py           Command-line pipeline
@@ -550,7 +588,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      270 tests
+tests/                      283 tests
 outputs/                    Generated results
 ```
 
@@ -560,7 +598,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-270 tests covering image loading, multi-page and bit-depth handling, channel
+283 tests covering image loading, multi-page and bit-depth handling, channel
 selection, thresholding, watershed separation, measurement correctness,
 percent-marker-positive quantification, counting accuracy against ground truth,
 the scoring metrics themselves, and the interface driven headlessly including

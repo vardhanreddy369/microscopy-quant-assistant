@@ -308,3 +308,32 @@ class TestBBBC013Claims:
                            README, "LY294002 anchored Spearman")
         result = harness.evaluate_drug("LY294002", "EFGH", harness.load_platemap())
         assert round(result["anchored_spearman"], 2) == pytest.approx(documented, abs=0.02)
+
+
+class TestHeadToHeadClaims:
+    """The benchmark table in the README must match what the methods produce."""
+
+    @staticmethod
+    def _series():
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import benchmark_methods as bench
+        return bench
+
+    def test_all_negative_only_gated_method_is_correct(self):
+        bench = self._series()
+        neg = bench.marker_intensities(bench.NEGATIVE_IMAGE)
+        # ours abstains; every ungated baseline invents positives
+        assert bench.gaussian_gated(neg) < 5.0
+        assert bench.gaussian_no_gate(neg) > 20.0
+        assert bench.gamma_no_gate(neg) > 20.0
+        assert bench.exact_otsu(neg) > 20.0
+
+    def test_methods_tie_on_accuracy_over_the_positive_series(self):
+        bench = self._series()
+        import json
+        truth = json.loads((SAMPLE_DIR / "marker_ground_truth.json").read_text())
+        for fn in (bench.gaussian_gated, bench.gamma_no_gate, bench.exact_otsu):
+            errors = [abs(fn(bench.marker_intensities(img)) - truth[img]["percent_positive"])
+                      for img in bench.POSITIVE_SERIES]
+            assert sum(errors) / len(errors) < 2.0

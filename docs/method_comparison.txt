@@ -1,0 +1,18 @@
+Head-to-head on the synthetic marker series (true fractions known)
+
+  method                    mean abs error   all-negative (0% true)
+                           on 10-70% images      reported % positive
+  Gaussian + gate (ours)             0.00        0.0%   correct
+  Gaussian, no gate                  0.00       54.2%   FALSE POSITIVES
+  Gamma, no gate                     0.00       70.8%   FALSE POSITIVES
+  k-means, no gate                   0.00       58.3%   FALSE POSITIVES
+  exact Otsu                         0.00       58.3%   FALSE POSITIVES
+
+Reading:
+  Accuracy on real positives is a near-tie — the distribution (Gaussian,
+  Gamma, k-means, Otsu) barely matters when a positive population exists.
+  The all-negative image is where they part: every ungated method splits
+  one population in half and invents 30-50% positives. Only the gated
+  method abstains and reports zero. Removing the gate from the same
+  Gaussian mixture reproduces the failure, so the population test — not
+  the distribution — is the contribution.

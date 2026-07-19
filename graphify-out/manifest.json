@@ -1,0 +1,327 @@
+{
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/.vscode/settings.json": {
+    "mtime": 1784400308.5981224,
+    "ast_hash": "579c0bbe92762753c404337052f8a703",
+    "semantic_hash": "579c0bbe92762753c404337052f8a703"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/app.py": {
+    "mtime": 1784490775.397856,
+    "ast_hash": "db1c0425af318cc79c94f4dffaac1c66",
+    "semantic_hash": "db1c0425af318cc79c94f4dffaac1c66"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/bbbc013_summary.json": {
+    "mtime": 1784492030.4338546,
+    "ast_hash": "ed6de1d688e82cae3047fd2d078ed5a7",
+    "semantic_hash": "ed6de1d688e82cae3047fd2d078ed5a7"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/validation_bbbc039_all.json": {
+    "mtime": 1784489005.5559428,
+    "ast_hash": "6b9de236b0bc624d26d74eca08fa80be",
+    "semantic_hash": "6b9de236b0bc624d26d74eca08fa80be"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/validation_bbbc039_cellpose.json": {
+    "mtime": 1784485836.2254374,
+    "ast_hash": "f2915801f5c482e681fe80a9bc78cde1",
+    "semantic_hash": "f2915801f5c482e681fe80a9bc78cde1"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/validation_bbbc039_test.json": {
+    "mtime": 1784488122.8325443,
+    "ast_hash": "3009d71aea2ba5426143d4a7d6af262e",
+    "semantic_hash": "3009d71aea2ba5426143d4a7d6af262e"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/pyrightconfig.json": {
+    "mtime": 1784400315.3977928,
+    "ast_hash": "8aaca66f6703dc987da1acf7afa65d5d",
+    "semantic_hash": "8aaca66f6703dc987da1acf7afa65d5d"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/run_demo.sh": {
+    "mtime": 1784412572.4652953,
+    "ast_hash": "437500d43623caeb137d5b90729add6f",
+    "semantic_hash": "437500d43623caeb137d5b90729add6f"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/ground_truth.json": {
+    "mtime": 1784490498.5631578,
+    "ast_hash": "76160527b066512c15d5f9cbe9034422",
+    "semantic_hash": "76160527b066512c15d5f9cbe9034422"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/marker_ground_truth.json": {
+    "mtime": 1784490498.563031,
+    "ast_hash": "5b3796157e34acaacb5c06cb570da1ee",
+    "semantic_hash": "5b3796157e34acaacb5c06cb570da1ee"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/__init__.py": {
+    "mtime": 1784407945.9644008,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/experiment_classical.py": {
+    "mtime": 1784487675.0024364,
+    "ast_hash": "544785f3005cd3a2cb55ce1affb572b1",
+    "semantic_hash": "544785f3005cd3a2cb55ce1affb572b1"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/fetch_bbbc013.py": {
+    "mtime": 1784491868.008906,
+    "ast_hash": "e7784667989514a67e32509caf4b4c1a",
+    "semantic_hash": "e7784667989514a67e32509caf4b4c1a"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/fetch_validation_data.py": {
+    "mtime": 1784407886.1318812,
+    "ast_hash": "c7a8639a6ba016c4c71fa414e3558b4c",
+    "semantic_hash": "c7a8639a6ba016c4c71fa414e3558b4c"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/make_figure.py": {
+    "mtime": 1784488744.829227,
+    "ast_hash": "763c0ca1f0fb88d148c38708c8be1b9d",
+    "semantic_hash": "763c0ca1f0fb88d148c38708c8be1b9d"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/make_sample_data.py": {
+    "mtime": 1784490455.5705724,
+    "ast_hash": "ff08503db8d10e144f62b64d6f9bcf67",
+    "semantic_hash": "ff08503db8d10e144f62b64d6f9bcf67"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/run_pipeline.py": {
+    "mtime": 1784397136.9872794,
+    "ast_hash": "005a11bf279effe5a90f272bb0ec2691",
+    "semantic_hash": "005a11bf279effe5a90f272bb0ec2691"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/tune_defaults.py": {
+    "mtime": 1784408382.4337273,
+    "ast_hash": "4b0859b189608d1597e47488b16a40c7",
+    "semantic_hash": "4b0859b189608d1597e47488b16a40c7"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/tune_on_bbbc039.py": {
+    "mtime": 1784409320.9342375,
+    "ast_hash": "0a8bc8f4538cef2939d003c018668fb2",
+    "semantic_hash": "0a8bc8f4538cef2939d003c018668fb2"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/validate.py": {
+    "mtime": 1784485374.431839,
+    "ast_hash": "f5748625a0bb56384f6b4655b2fc1612",
+    "semantic_hash": "f5748625a0bb56384f6b4655b2fc1612"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/validate_bbbc013.py": {
+    "mtime": 1784492867.6652503,
+    "ast_hash": "4f818f62bb9653106e3899dc7a60989e",
+    "semantic_hash": "4f818f62bb9653106e3899dc7a60989e"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/scripts/validate_positivity.py": {
+    "mtime": 1784490587.0388973,
+    "ast_hash": "986def24f7cd88a3d28af77ad7d7d7ee",
+    "semantic_hash": "986def24f7cd88a3d28af77ad7d7d7ee"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/__init__.py": {
+    "mtime": 1784396843.3300273,
+    "ast_hash": "ab7cb3559c20c3b31937deb1432612fb",
+    "semantic_hash": "ab7cb3559c20c3b31937deb1432612fb"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/config.py": {
+    "mtime": 1784489414.2005463,
+    "ast_hash": "0f19beafa1c2d0aa196b7eb8dd389739",
+    "semantic_hash": "0f19beafa1c2d0aa196b7eb8dd389739"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/export.py": {
+    "mtime": 1784396987.5439613,
+    "ast_hash": "1852f07737517d006f45fd4a9835ff16",
+    "semantic_hash": "1852f07737517d006f45fd4a9835ff16"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/learned_segmentation.py": {
+    "mtime": 1784484715.9442585,
+    "ast_hash": "a76b48cd1d6022c73e69f630e00d76cb",
+    "semantic_hash": "a76b48cd1d6022c73e69f630e00d76cb"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/markers.py": {
+    "mtime": 1784490673.1805272,
+    "ast_hash": "3cae234479e7073d8063cec404ba2e71",
+    "semantic_hash": "3cae234479e7073d8063cec404ba2e71"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/measurements.py": {
+    "mtime": 1784396955.5350063,
+    "ast_hash": "22ca7fe1614f4d4eff050f3bead4d025",
+    "semantic_hash": "22ca7fe1614f4d4eff050f3bead4d025"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/positivity.py": {
+    "mtime": 1784490483.3984203,
+    "ast_hash": "eb644fe44038c820b7fde462638a06a7",
+    "semantic_hash": "eb644fe44038c820b7fde462638a06a7"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/preprocessing.py": {
+    "mtime": 1784414933.2239108,
+    "ast_hash": "3607e3582c2235a737deff45cc173af7",
+    "semantic_hash": "3607e3582c2235a737deff45cc173af7"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/segmentation.py": {
+    "mtime": 1784488091.2058673,
+    "ast_hash": "dcb4cfb07977c51a2e29611737582660",
+    "semantic_hash": "dcb4cfb07977c51a2e29611737582660"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/validation.py": {
+    "mtime": 1784409543.180844,
+    "ast_hash": "5d6a79e68ad5b84c589b0b90891a5aef",
+    "semantic_hash": "5d6a79e68ad5b84c589b0b90891a5aef"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/src/visualization.py": {
+    "mtime": 1784485231.9655263,
+    "ast_hash": "1b241ed276cde658511ebd289d32d6f8",
+    "semantic_hash": "1b241ed276cde658511ebd289d32d6f8"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_app.py": {
+    "mtime": 1784485275.3034592,
+    "ast_hash": "943edd353c194ba90321b5e90aa8f45d",
+    "semantic_hash": "943edd353c194ba90321b5e90aa8f45d"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_bbbc013.py": {
+    "mtime": 1784492902.381271,
+    "ast_hash": "a2a114b54c2e26b36ddb4f1723b68fba",
+    "semantic_hash": "a2a114b54c2e26b36ddb4f1723b68fba"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_claims.py": {
+    "mtime": 1784489460.0898826,
+    "ast_hash": "2e625f53f261e126cc47992ed459baec",
+    "semantic_hash": "2e625f53f261e126cc47992ed459baec"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_config.py": {
+    "mtime": 1784409654.1920137,
+    "ast_hash": "138416880eaea2219e251d2c0ec32873",
+    "semantic_hash": "138416880eaea2219e251d2c0ec32873"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_documentation.py": {
+    "mtime": 1784492932.6699011,
+    "ast_hash": "1134e3eb2f582fa2a6a3cab3a624a3ef",
+    "semantic_hash": "1134e3eb2f582fa2a6a3cab3a624a3ef"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_learned_segmentation.py": {
+    "mtime": 1784484976.3309786,
+    "ast_hash": "5cfc3196b19add39855a81d53e2eb31e",
+    "semantic_hash": "5cfc3196b19add39855a81d53e2eb31e"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_markers.py": {
+    "mtime": 1784485106.2159746,
+    "ast_hash": "5dbb8d023f4973c78dc401c6b8b6125c",
+    "semantic_hash": "5dbb8d023f4973c78dc401c6b8b6125c"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_measurements.py": {
+    "mtime": 1784397607.2753973,
+    "ast_hash": "4446ecacbe4cc59970913eba4e4098b8",
+    "semantic_hash": "4446ecacbe4cc59970913eba4e4098b8"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_positivity.py": {
+    "mtime": 1784490552.8876743,
+    "ast_hash": "d9c49d8d63137c2f179e3dfa3a741a5b",
+    "semantic_hash": "d9c49d8d63137c2f179e3dfa3a741a5b"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_preprocessing.py": {
+    "mtime": 1784414993.4419758,
+    "ast_hash": "b1b634950f1752b72b042d3fa0b21d8c",
+    "semantic_hash": "b1b634950f1752b72b042d3fa0b21d8c"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_segmentation.py": {
+    "mtime": 1784488220.863342,
+    "ast_hash": "1c8938b7964f4f6c5c6e1571a80c4513",
+    "semantic_hash": "1c8938b7964f4f6c5c6e1571a80c4513"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/tests/test_validation.py": {
+    "mtime": 1784409633.455361,
+    "ast_hash": "7d4d5b325b115b11257f62c6a677a282",
+    "semantic_hash": "7d4d5b325b115b11257f62c6a677a282"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/DEMO.md": {
+    "mtime": 1784488682.9759703,
+    "ast_hash": "467d79f41927afab3ae3d9c9cdc48696",
+    "semantic_hash": "467d79f41927afab3ae3d9c9cdc48696"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/README.md": {
+    "mtime": 1784493023.9806306,
+    "ast_hash": "b4431a3441362b7eba590a26e7fb10d8",
+    "semantic_hash": "b4431a3441362b7eba590a26e7fb10d8"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/VALIDATION_DATA.md": {
+    "mtime": 1784409746.127809,
+    "ast_hash": "32c205eaad54d2f1a52a0822d022bfd9",
+    "semantic_hash": "32c205eaad54d2f1a52a0822d022bfd9"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/bbbc013_validation.txt": {
+    "mtime": 1784492887.2326846,
+    "ast_hash": "064eaac6daabd74173b002a84f504c1a",
+    "semantic_hash": "064eaac6daabd74173b002a84f504c1a"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/docs/positivity_validation.txt": {
+    "mtime": 1784490788.9805942,
+    "ast_hash": "9f761713352ebf9507c3de503b52595f",
+    "semantic_hash": "9f761713352ebf9507c3de503b52595f"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/requirements-cellpose.txt": {
+    "mtime": 1784485275.3015416,
+    "ast_hash": "58d48ccbb93d1aa1525e5fffaf89b4fb",
+    "semantic_hash": "58d48ccbb93d1aa1525e5fffaf89b4fb"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/requirements.txt": {
+    "mtime": 1784489415.5371706,
+    "ast_hash": "a5dbf849ebacb926fbadc0176f5e89c9",
+    "semantic_hash": "a5dbf849ebacb926fbadc0176f5e89c9"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/source_information.txt": {
+    "mtime": 1784490498.5633867,
+    "ast_hash": "57f845c07e4f13e99fce03e33192eee4",
+    "semantic_hash": "57f845c07e4f13e99fce03e33192eee4"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/assets/example_result.png": {
+    "mtime": 1784488745.7978315,
+    "ast_hash": "5ef77ad11e1c2e6159d371810eb31a15",
+    "semantic_hash": "5ef77ad11e1c2e6159d371810eb31a15"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/public_human_mitosis.png": {
+    "mtime": 1784490498.5439522,
+    "ast_hash": "68d1276866ed97c31087c122a26b61c8",
+    "semantic_hash": "68d1276866ed97c31087c122a26b61c8"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/public_immunohistochemistry.png": {
+    "mtime": 1784490498.562223,
+    "ast_hash": "7867c960f9cc21a6e39844fcee90db25",
+    "semantic_hash": "7867c960f9cc21a6e39844fcee90db25"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_difficult.png": {
+    "mtime": 1784490498.125965,
+    "ast_hash": "431da54b02b12db86f14c697983cce4a",
+    "semantic_hash": "431da54b02b12db86f14c697983cce4a"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_easy.png": {
+    "mtime": 1784490498.0871394,
+    "ast_hash": "2fc56beda1c112686aade7d66c2c2ee1",
+    "semantic_hash": "2fc56beda1c112686aade7d66c2c2ee1"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_00pct.png": {
+    "mtime": 1784490498.2734385,
+    "ast_hash": "6d7c782991e877aa9b13dfd8803d014b",
+    "semantic_hash": "6d7c782991e877aa9b13dfd8803d014b"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_10pct.png": {
+    "mtime": 1784490498.1753147,
+    "ast_hash": "755432b3ed90f90957e498bc2006c4f6",
+    "semantic_hash": "755432b3ed90f90957e498bc2006c4f6"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_30pct.png": {
+    "mtime": 1784490498.2001507,
+    "ast_hash": "ec5d254cb0dfb05d6573586679ee38b4",
+    "semantic_hash": "ec5d254cb0dfb05d6573586679ee38b4"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_50pct.png": {
+    "mtime": 1784490498.22444,
+    "ast_hash": "206624cc8395582e09dcf5c6a8eae7e3",
+    "semantic_hash": "206624cc8395582e09dcf5c6a8eae7e3"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_70pct.png": {
+    "mtime": 1784490498.2492926,
+    "ast_hash": "4a685511df212c972d34f594e18f5ca1",
+    "semantic_hash": "4a685511df212c972d34f594e18f5ca1"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_marker_pair.png": {
+    "mtime": 1784490498.150486,
+    "ast_hash": "f01e375bc8763584ddf885534d40fc41",
+    "semantic_hash": "f01e375bc8763584ddf885534d40fc41"
+  },
+  "/Users/srivardhanreddygutta/Documents/bio/microscopy-quant-assistant/sample_data/synthetic_moderate.png": {
+    "mtime": 1784490498.0976033,
+    "ast_hash": "ce9f49ded89611a096e62ceda2385207",
+    "semantic_hash": "ce9f49ded89611a096e62ceda2385207"
+  }
+}
