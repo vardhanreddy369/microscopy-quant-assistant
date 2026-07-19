@@ -1,0 +1,9 @@
+{
+  "synthetic_marker_pair.png": {
+    "total_nuclei": 44,
+    "marker_positive": 13,
+    "percent_positive": 29.55,
+    "nuclear_channel": "blue",
+    "marker_channel": "green"
+  }
+}

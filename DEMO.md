@@ -50,6 +50,25 @@ Switch to **Synthetic - difficult (known failure case)**.
 > separate objects that overlap past a certain point, and no amount of tuning
 > fixes it. I'd rather show you that than pretend it always works."
 
+## The part that is actually about his lab (about 40 seconds)
+
+Switch **Mode** to **Marker positive (two-channel)**.
+
+> "This is the bit I think matters for you. Your TUNEL and caspase-3 work isn't
+> a count, it's a percentage. So this segments nuclei in the DAPI channel, then
+> measures the second channel inside each nucleus and reports percent positive.
+> Amber outlines are positive, slate are negative — the negatives stay in the
+> picture because they're the denominator."
+
+Point at the histogram underneath.
+
+> "And it shows you the distribution with the threshold on it, so you can see
+> whether there really are two populations. For anything you'd publish you'd set
+> that threshold from a negative control rather than automatically."
+
+On this sample the true answer is 29.55% and it reports 29.5%, because the
+generator knows which cells it made positive.
+
 ## The question (about 20 seconds)
 
 This is the actual purpose of the meeting.
@@ -62,10 +81,25 @@ Then stop talking and let him answer.
 
 ## If he asks "how accurate is it?"
 
-> "I scored it against a public dataset of about 23,000 hand-annotated nuclei.
-> F1 is 0.90 at the standard overlap threshold, on images it wasn't tuned on.
-> On your images I have no idea, and I wouldn't claim otherwise until I'd
-> tested it against slides someone here had annotated."
+Give him the real number, including the unflattering one.
+
+> "On a public set of 23,000 hand-annotated nuclei, the classical method scores
+> 0.77 on the metric the benchmark's authors use — which puts it just below
+> CellProfiler. A watershed can't compete with a learned model and I'm not going
+> to pretend otherwise. There's also a Cellpose mode in there that scores 0.87 on
+> the same held-out images, which is above DeepCell. On your images I have no
+> idea until I've tested against slides someone here annotated."
+
+That answer is worth more than a good score would be. It tells him you read the
+benchmark paper, you know which metric is which, and you will tell him when
+something you built is not the best option.
+
+## If he asks "why not just use Cellpose then?"
+
+> "For segmentation you should, and it's in there. What Cellpose doesn't give
+> you is the percent-positive readout, the batch run over a folder, the CSV your
+> student actually needs, or a way to check the numbers against ground truth.
+> That's the part I built."
 
 ## If he asks "we already use ImageJ / Fiji"
 

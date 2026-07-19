@@ -219,6 +219,62 @@ def make_difficult(size: int = 512, seed: int = 23) -> tuple[np.ndarray, int]:
     return image, true_count
 
 
+def make_marker_pair(size: int = 512, seed: int = 41,
+                     count: int = 44, positive: int = 13) -> tuple[np.ndarray, int, int]:
+    """Two-channel image: nuclei in blue, a marker in green.
+
+    Models the shape of a real percent-positive experiment (TUNEL, cleaved
+    caspase-3, Ki67): every cell appears in the nuclear channel, and only some
+    carry marker signal. Because the generator decides which nuclei are
+    positive, the true percentage is known and the measurement can be checked
+    rather than trusted.
+
+    Negative cells are given a low but non-zero marker level, as real ones have:
+    background staining is what makes the positive/negative call non-trivial.
+    """
+    rng = np.random.default_rng(seed)
+    placed: list[Nucleus] = []
+
+    attempts = 0
+    while len(placed) < count and attempts < 8000:
+        attempts += 1
+        radius = rng.uniform(11.0, 16.0)
+        y = rng.uniform(radius + 5, size - radius - 5)
+        x = rng.uniform(radius + 5, size - radius - 5)
+        if _overlaps(placed, y, x, radius, min_factor=1.35):
+            continue
+        placed.append(
+            Nucleus(y, x, radius, rng.uniform(0.70, 0.92),
+                    rng.uniform(1.0, 1.15), rng.uniform(0, np.pi))
+        )
+
+    # Which nuclei are marker-positive is fixed by the seed, so the true
+    # percentage is reproducible.
+    positive_index = set(
+        rng.choice(len(placed), size=min(positive, len(placed)), replace=False).tolist()
+    )
+
+    nuclear = [n for n in placed]
+    marker = [
+        Nucleus(
+            n.y, n.x, n.radius * 0.82,
+            rng.uniform(0.62, 0.88) if i in positive_index else rng.uniform(0.06, 0.15),
+            n.elongation, n.angle,
+        )
+        for i, n in enumerate(placed)
+    ]
+
+    blue = _render(nuclear, size, np.random.default_rng(seed + 1),
+                   noise=0.015, background=0.04)
+    green = _render(marker, size, np.random.default_rng(seed + 2),
+                    noise=0.015, background=0.03)
+
+    rgb = np.zeros((size, size, 3), dtype=np.uint8)
+    rgb[..., 1] = green
+    rgb[..., 2] = blue
+    return rgb, len(placed), len(positive_index)
+
+
 def save_real_references() -> list[str]:
     """Save real public microscopy images from the scikit-image collection.
 
@@ -308,8 +364,28 @@ def main() -> None:
         ground_truth[name] = count
         print(f"  wrote {name}  shape={image.shape}  true objects={count}")
 
+    marker_image, marker_total, marker_positive = make_marker_pair()
+    iio.imwrite(SAMPLE_DIR / "synthetic_marker_pair.png", marker_image)
+    ground_truth["synthetic_marker_pair.png"] = marker_total
+    print(f"  wrote synthetic_marker_pair.png  {marker_positive}/{marker_total} "
+          f"marker-positive ({100 * marker_positive / marker_total:.1f}%)")
+
     save_real_references()
 
+    (SAMPLE_DIR / "marker_ground_truth.json").write_text(
+        json.dumps(
+            {
+                "synthetic_marker_pair.png": {
+                    "total_nuclei": marker_total,
+                    "marker_positive": marker_positive,
+                    "percent_positive": round(100 * marker_positive / marker_total, 2),
+                    "nuclear_channel": "blue",
+                    "marker_channel": "green",
+                }
+            },
+            indent=2,
+        ) + "\n"
+    )
     (SAMPLE_DIR / "ground_truth.json").write_text(
         json.dumps(ground_truth, indent=2) + "\n"
     )

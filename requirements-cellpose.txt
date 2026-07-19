@@ -1,0 +1,11 @@
+# Optional: the learned segmentation engine.
+#
+#     pip install -r requirements-cellpose.txt
+#
+# Pulls in PyTorch and downloads roughly 1.2 GB of model weights on first use.
+# The classical pipeline needs none of this and the application runs without it;
+# the Cellpose engine simply does not appear as an option.
+#
+# On the BBBC039 held-out test split this raises mean F1 across IoU thresholds
+# from 0.770 to 0.870, at roughly 100x the runtime per image.
+cellpose>=4.0

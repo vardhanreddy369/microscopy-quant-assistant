@@ -19,7 +19,7 @@ import imageio.v3 as iio
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src import preprocessing, segmentation, validation
+from src import learned_segmentation, preprocessing, segmentation, validation
 from src.config import DEFAULTS
 from src.validation import DatasetScore, decode_colored_mask, score_image
 
@@ -53,15 +53,20 @@ def evaluate(stems: list[str], params: dict, thresholds=validation.DEFAULT_THRES
 
         prepared = preprocessing.prepare(image_path, channel="grayscale",
                                          background="dark")
-        result = segmentation.segment(
-            prepared.analysis,
-            threshold_method=params["threshold_method"],
-            min_size=params["min_size"],
-            smoothing_sigma=params["smoothing_sigma"],
-            cleanup_radius=params["cleanup_radius"],
-            separate_touching=params["separate_touching"],
-            peak_min_distance=params["peak_min_distance"],
-        )
+        if params.get("engine") == "cellpose":
+            result = learned_segmentation.segment(
+                prepared.analysis, min_size=params["min_size"]
+            )
+        else:
+            result = segmentation.segment(
+                prepared.analysis,
+                threshold_method=params["threshold_method"],
+                min_size=params["min_size"],
+                smoothing_sigma=params["smoothing_sigma"],
+                cleanup_radius=params["cleanup_radius"],
+                separate_touching=params["separate_touching"],
+                peak_min_distance=params["peak_min_distance"],
+            )
         truth = decode_colored_mask(iio.imread(mask_path))
         scores.append(score_image(result.labels, truth, thresholds, name=stem))
 
@@ -92,6 +97,10 @@ def report(score: DatasetScore, title: str) -> None:
           f"(several nuclei fused into one)")
     print(f"count error (MAPE)    {summary['count_mape']:.1%}")
 
+    mean_f1 = sum(score.f1_at(t) for t in score.thresholds) / len(score.thresholds)
+    print(f"mean F1 across IoU    {mean_f1:.3f}   "
+          f"(the metric Caicedo et al. report)")
+
     print("\nF1 by IoU threshold:")
     for threshold in score.thresholds:
         bar = "#" * int(round(score.f1_at(threshold) * 40))
@@ -109,6 +118,9 @@ def build_parser() -> argparse.ArgumentParser:
                         default=DEFAULTS["cleanup_radius"])
     parser.add_argument("--threshold-method", default=DEFAULTS["threshold_method"])
     parser.add_argument("--no-separate", action="store_true")
+    parser.add_argument("--engine", choices=("classical", "cellpose"),
+                        default="classical",
+                        help="cellpose requires the optional dependency")
     parser.add_argument("--json", type=Path, default=None)
     return parser
 
@@ -128,7 +140,12 @@ def main(argv=None) -> int:
         "cleanup_radius": args.cleanup_radius,
         "peak_min_distance": args.peak_distance,
         "separate_touching": not args.no_separate,
+        "engine": args.engine,
     }
+
+    if args.engine == "cellpose" and not learned_segmentation.is_available():
+        print(learned_segmentation.unavailable_reason(), file=sys.stderr)
+        return 1
 
     stems = load_split(args.split)
     print(f"Scoring {len(stems)} images from the '{args.split}' split")

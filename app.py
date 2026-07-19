@@ -8,10 +8,19 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
-from src import export, measurements, preprocessing, segmentation, visualization
+from src import (
+    export,
+    learned_segmentation,
+    markers,
+    measurements,
+    preprocessing,
+    segmentation,
+    visualization,
+)
 from src.config import (
     DEFAULTS,
     SAMPLE_IMAGES,
@@ -165,25 +174,75 @@ def analyze(
     peak_min_distance: int,
     background_radius: int,
     pixel_size_um: float | None,
+    engine: str = "classical",
 ):
     """Run the full pipeline. Cached on the image bytes and every parameter."""
     prepared = preprocessing.prepare(
         io.BytesIO(image_bytes), channel=channel, background=background
     )
-    result = segmentation.segment(
-        prepared.analysis,
-        threshold_method=threshold_method,
-        manual_threshold=manual_threshold,
-        min_size=min_size,
-        smoothing_sigma=smoothing_sigma,
-        cleanup_radius=cleanup_radius,
-        fill_holes=fill_holes,
-        separate_touching=separate_touching,
-        peak_min_distance=peak_min_distance,
-        background_radius=background_radius,
-    )
+    result = run_segmentation(prepared.analysis, engine, {
+        "threshold_method": threshold_method,
+        "manual_threshold": manual_threshold,
+        "min_size": min_size,
+        "smoothing_sigma": smoothing_sigma,
+        "cleanup_radius": cleanup_radius,
+        "fill_holes": fill_holes,
+        "separate_touching": separate_touching,
+        "peak_min_distance": peak_min_distance,
+        "background_radius": background_radius,
+    })
     frame = measurements.measure(result.labels, prepared.intensity, pixel_size_um)
     return prepared, result, frame
+
+
+def run_segmentation(plane, method: str, params: dict):
+    """Segment with whichever engine is selected.
+
+    Both engines return the same result type, so everything downstream — the
+    measurements, the overlay, the exports — is identical either way.
+    """
+    if method == "cellpose":
+        return learned_segmentation.segment(plane, min_size=params["min_size"])
+    return segmentation.segment(
+        plane,
+        threshold_method=params["threshold_method"],
+        manual_threshold=params["manual_threshold"],
+        min_size=params["min_size"],
+        smoothing_sigma=params["smoothing_sigma"],
+        cleanup_radius=params["cleanup_radius"],
+        fill_holes=params["fill_holes"],
+        separate_touching=params["separate_touching"],
+        peak_min_distance=params["peak_min_distance"],
+        background_radius=params["background_radius"],
+    )
+
+
+@st.cache_data(show_spinner=False, max_entries=12)
+def analyze_marker(
+    image_bytes: bytes,
+    nuclear_channel: str,
+    marker_channel: str,
+    background: str,
+    engine: str,
+    marker_method: str,
+    marker_manual: float | None,
+    seg_params: tuple,
+):
+    """Two-channel analysis: segment nuclei, score a marker channel inside them."""
+    params = dict(seg_params)
+    nuclear = preprocessing.prepare(
+        io.BytesIO(image_bytes), channel=nuclear_channel, background=background
+    )
+    marker = preprocessing.prepare(
+        io.BytesIO(image_bytes), channel=marker_channel, background=background
+    )
+    result = run_segmentation(nuclear.analysis, engine, params)
+    frame = measurements.measure(result.labels, nuclear.intensity, params["pixel_size_um"])
+    marker_result = markers.measure_marker(
+        result.labels, marker.intensity,
+        method=marker_method, manual_threshold=marker_manual,
+    )
+    return nuclear, marker, result, frame, marker_result
 
 
 def read_source_bytes(uploaded, sample_filename: str) -> tuple[bytes, str] | None:
@@ -204,9 +263,10 @@ st.sidebar.title("Analysis controls")
 
 mode = st.sidebar.radio(
     "Mode",
-    ("Single image", "Batch (multiple images)"),
-    help="Batch mode analyses several images with identical settings and "
-         "returns one combined CSV.",
+    ("Single image", "Batch (multiple images)", "Marker positive (two-channel)"),
+    help="Marker mode segments nuclei in one channel and scores a second "
+         "channel inside them, which is how a percent-positive result is "
+         "produced. Batch mode analyses several images with identical settings.",
 )
 
 st.sidebar.divider()
@@ -217,6 +277,10 @@ sample_notes = {label: note for label, _, note in SAMPLE_IMAGES}
 
 uploaded_single = None
 uploaded_batch: list = []
+nuclear_channel, marker_channel = "blue", "green"
+marker_method, marker_manual = "otsu", None
+MARKER_SAMPLE_LABEL = "Synthetic - marker pair (two-channel)"
+MARKER_SAMPLE_FILE = "synthetic_marker_pair.png"
 
 if mode == "Single image":
     st.sidebar.subheader("Image source")
@@ -232,6 +296,42 @@ if mode == "Single image":
     st.sidebar.caption(sample_notes[sample_label])
     if uploaded_single is not None:
         st.sidebar.info("Using the uploaded image. Remove it to return to the samples.")
+elif mode == "Marker positive (two-channel)":
+    st.sidebar.subheader("Image source")
+    uploaded_single = st.sidebar.file_uploader(
+        "Upload a two-channel image", type=["png", "jpg", "jpeg", "tif", "tiff"],
+        help="A colour image whose channels hold the nuclear stain and the "
+             "marker.",
+    )
+    sample_label = MARKER_SAMPLE_LABEL
+    st.sidebar.caption(
+        "Bundled sample: simulated nuclei in blue with a marker in green, "
+        "where the true positive fraction is known."
+    )
+    st.sidebar.divider()
+    st.sidebar.subheader("Marker")
+    nuclear_channel = st.sidebar.selectbox(
+        "Nuclear channel", CHANNELS, index=CHANNELS.index("blue"),
+        help="The channel every cell appears in. This defines the denominator.",
+    )
+    marker_channel = st.sidebar.selectbox(
+        "Marker channel", CHANNELS, index=CHANNELS.index("green"),
+        help="The channel that decides which cells count as positive.",
+    )
+    marker_mode = st.sidebar.radio(
+        "Positivity threshold", ("Automatic", "Manual"), horizontal=True,
+        help="Automatic splits the per-object intensities in two. Manual is the "
+             "rigorous option: take the value from a negative control imaged "
+             "alongside the sample.",
+    )
+    if marker_mode == "Manual":
+        marker_method = "manual"
+        marker_manual = float(st.sidebar.slider(
+            "Marker threshold (0-255)", 0.0, 255.0, 60.0, 1.0
+        ))
+    else:
+        marker_method = "otsu"
+        marker_manual = None
 else:
     st.sidebar.subheader("Image sources")
     uploaded_batch = st.sidebar.file_uploader(
@@ -244,7 +344,9 @@ else:
     )
     sample_label = sample_labels[0]
 
-selected_file = sample_files[sample_label]
+# The marker sample is not in the single-image registry, so it is
+# resolved separately rather than looked up there.
+selected_file = sample_files.get(sample_label, MARKER_SAMPLE_FILE)
 
 # Applying a sample's overrides means switching to the histology image does not
 # silently analyse it with fluorescence settings that make no sense for it.
@@ -285,6 +387,25 @@ background_radius = st.sidebar.slider(
 
 st.sidebar.divider()
 st.sidebar.subheader("Segmentation")
+
+CELLPOSE_READY = learned_segmentation.is_available()
+engine_label = st.sidebar.radio(
+    "Engine",
+    ("Classical (watershed)", "Cellpose (pretrained model)"),
+    help="Classical is instant and needs no network. Cellpose is markedly more "
+         "accurate on touching nuclei but is far slower and needs its weights "
+         "downloaded once.",
+)
+engine = "cellpose" if engine_label.startswith("Cellpose") else "classical"
+
+if engine == "cellpose" and not CELLPOSE_READY:
+    st.sidebar.warning(learned_segmentation.unavailable_reason(), icon="⚠️")
+    engine = "classical"
+elif engine == "cellpose":
+    st.sidebar.caption(
+        "Roughly 10 seconds per image. The threshold and watershed controls "
+        "below do not apply; the model predicts boundaries directly."
+    )
 
 threshold_mode = st.sidebar.radio("Threshold", ("Automatic", "Manual"), horizontal=True)
 if threshold_mode == "Automatic":
@@ -353,6 +474,7 @@ PARAMS = dict(
     peak_min_distance=peak_min_distance,
     background_radius=background_radius,
     pixel_size_um=pixel_size,
+    engine=engine,
 )
 
 
@@ -510,6 +632,87 @@ def render_single(image_bytes: bytes, display_name: str,
     )
 
 
+def render_marker(image_bytes: bytes, display_name: str,
+                  nuclear_channel: str, marker_channel: str,
+                  marker_method: str, marker_manual: float | None) -> None:
+    """Percent-marker-positive workflow."""
+    seg_params = tuple(sorted(PARAMS.items()))
+    nuclear, marker, result, frame, marker_result = analyze_marker(
+        image_bytes, nuclear_channel, marker_channel, PARAMS["background"],
+        PARAMS["engine"], marker_method, marker_manual, seg_params,
+    )
+    summary = markers.summarize(marker_result)
+
+    cards = st.columns(4)
+    cards[0].metric(
+        "Percent positive",
+        "n/a" if not marker_result.total else f"{summary['percent_positive']:.1f}%",
+    )
+    cards[1].metric("Positive", f"{summary['positive']:,}")
+    cards[2].metric("Total nuclei", f"{summary['total']:,}")
+    cards[3].metric(
+        "Threshold (0-255)",
+        "n/a" if not np.isfinite(summary["threshold"]) else f"{summary['threshold']:.1f}",
+        help="Objects at or above this mean marker intensity count as positive.",
+    )
+
+    if not marker_result.total:
+        st.error(
+            "No nuclei were detected in the nuclear channel, so there is no "
+            "denominator to report a percentage against. Check that the nuclear "
+            "channel and background mode are right.",
+            icon="🔍",
+        )
+        return
+
+    st.caption(
+        f"Nuclei segmented in the **{nuclear_channel}** channel; the "
+        f"**{marker_channel}** channel scored inside them. Separation between "
+        f"the two populations is {summary['separation']:.2f} of the intensity "
+        "range — read it alongside the histogram below rather than on its own, "
+        "since a few dozen objects can show a gap by chance."
+    )
+
+    with st.container(key="specimen"):
+        left, right = st.columns(2)
+        with left:
+            st.subheader("Nuclear channel")
+            st.image(visualization.to_display_rgb(nuclear.analysis), width="stretch")
+        with right:
+            st.subheader("Marker call")
+            st.image(
+                visualization.annotate_marker(marker.analysis, result.labels,
+                                              marker_result.frame),
+                width="stretch",
+            )
+    st.caption("Amber outlines are marker-positive; slate outlines are negative "
+               "and still counted in the denominator.")
+
+    st.pyplot(
+        visualization.marker_histogram(marker_result.frame, marker_result.threshold),
+        width="stretch",
+    )
+
+    combined = frame.merge(marker_result.frame, on="object_id", how="left")
+    with st.expander("Measurement table", expanded=False):
+        st.dataframe(combined, width="stretch", height=340)
+
+    stem = Path(display_name).stem
+    download_cols = st.columns(2)
+    download_cols[0].download_button(
+        "Per-object measurements (CSV)",
+        export.dataframe_to_csv_bytes(combined),
+        file_name=f"{stem}_marker_measurements.csv",
+        mime="text/csv", width="stretch",
+    )
+    download_cols[1].download_button(
+        "Summary (CSV)",
+        export.dataframe_to_csv_bytes(pd.DataFrame([summary])),
+        file_name=f"{stem}_marker_summary.csv",
+        mime="text/csv", width="stretch",
+    )
+
+
 def render_batch(sources: list[tuple[bytes, str]]) -> None:
     st.subheader("Batch analysis")
     st.caption(
@@ -632,6 +835,19 @@ try:
                         display_name,
                         None if uploaded_single is not None else selected_file,
                     )
+    elif mode == "Marker positive (two-channel)":
+        source = read_source_bytes(uploaded_single, MARKER_SAMPLE_FILE)
+        if source is None:
+            st.error(
+                "The two-channel sample is missing. Regenerate it with "
+                "`python scripts/make_sample_data.py`.",
+                icon="📁",
+            )
+        else:
+            image_bytes, display_name = source
+            with st.spinner("Analysing..."):
+                render_marker(image_bytes, display_name, nuclear_channel,
+                              marker_channel, marker_method, marker_manual)
     else:
         sources: list[tuple[bytes, str]] = [
             (item.getvalue(), item.name) for item in uploaded_batch

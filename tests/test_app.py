@@ -260,3 +260,87 @@ class TestOffDomainSampleCaveat:
             "Synthetic - easy"
         ).run()
         assert not [e for e in app.error if "not valid" in e.value.lower()]
+
+
+class TestSegmentationEngineSelector:
+    """The engine choice must be offered, and must degrade safely."""
+
+    def test_engine_control_exists(self):
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        engine = find(app.sidebar.radio, "Engine")
+        assert any("Classical" in option for option in engine.options)
+        assert any("Cellpose" in option for option in engine.options)
+
+    def test_classical_is_the_default(self):
+        """The default must need no network, no GPU and no 1 GB download."""
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        assert find(app.sidebar.radio, "Engine").value.startswith("Classical")
+
+    def test_selecting_cellpose_never_crashes(self):
+        """Whether or not Cellpose is installed, choosing it must be safe.
+
+        When it is missing the app must explain and fall back rather than
+        raising, since the option is visible in every install.
+        """
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        find(app.sidebar.radio, "Engine").set_value(
+            "Cellpose (pretrained model)"
+        ).run()
+        assert not app.exception
+        assert int(find(app.metric, "Objects detected").value.replace(",", "")) >= 0
+
+
+class TestMarkerMode:
+    """Percent-marker-positive is the shape of a real fluorescence endpoint."""
+
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def marker_run():
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        find(app.sidebar.radio, "Mode").set_value(
+            "Marker positive (two-channel)"
+        ).run()
+        return app
+
+    def test_it_runs_without_error(self, marker_run):
+        assert not marker_run.exception
+        assert not marker_run.error
+
+    def test_it_reports_a_percentage(self, marker_run):
+        value = find(marker_run.metric, "Percent positive").value
+        assert value.endswith("%")
+
+    def test_the_percentage_matches_the_known_truth(self, marker_run):
+        """The bundled sample has a known positive fraction of 29.55%."""
+        value = float(find(marker_run.metric, "Percent positive").value.rstrip("%"))
+        assert value == pytest.approx(29.55, abs=1.5)
+
+    def test_the_denominator_is_every_nucleus(self, marker_run):
+        total = int(find(marker_run.metric, "Total nuclei").value.replace(",", ""))
+        positive = int(find(marker_run.metric, "Positive").value.replace(",", ""))
+        assert total == 44
+        assert positive < total, "the denominator must include negative cells"
+
+    def test_channel_controls_are_offered(self, marker_run):
+        nuclear = find(marker_run.sidebar.selectbox, "Nuclear channel")
+        marker = find(marker_run.sidebar.selectbox, "Marker channel")
+        assert nuclear.value == "blue"
+        assert marker.value == "green"
+
+    def test_manual_threshold_changes_the_result(self):
+        app = AppTest.from_file(APP, default_timeout=TIMEOUT)
+        app.run()
+        find(app.sidebar.radio, "Mode").set_value(
+            "Marker positive (two-channel)"
+        ).run()
+        automatic = int(find(app.metric, "Positive").value)
+
+        find(app.sidebar.radio, "Positivity threshold").set_value("Manual").run()
+        find(app.sidebar.slider, "Marker threshold (0-255)").set_value(250.0).run()
+        assert not app.exception
+        # Almost nothing reaches 250, so the count must fall.
+        assert int(find(app.metric, "Positive").value) < automatic

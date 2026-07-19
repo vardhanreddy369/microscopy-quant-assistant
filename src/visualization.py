@@ -158,8 +158,11 @@ _RULE = "#2A3542"
 _SIGNAL = "#F2C14E"   # amber, the measurement accent
 _DAPI = "#7FB3D5"     # blue, the intensity channel
 
-# Numbers in the charts are set in the same monospace face as the readout.
-_MONO = ["SF Mono", "Menlo", "DejaVu Sans Mono", "monospace"]
+# Numbers in the charts are set in monospace, matching the readout in the
+# interface. DejaVu Sans Mono first because matplotlib bundles it and therefore
+# always resolves it; naming a system-only face such as SF Mono makes matplotlib
+# emit a "font family not found" warning for every label it draws.
+_MONO = ["DejaVu Sans Mono", "monospace"]
 
 
 def _histogram(
@@ -211,3 +214,104 @@ def intensity_histogram(frame: pd.DataFrame) -> plt.Figure:
     return _histogram(
         values, "Mean intensity distribution", "Mean intensity (0-255)", _DAPI
     )
+
+
+# --- Marker-positive rendering ------------------------------------------
+
+POSITIVE_COLOR = (242, 193, 78)   # amber: the object counts
+NEGATIVE_COLOR = (110, 128, 148)  # slate: the object was measured and did not
+
+
+def annotate_marker(
+    base: np.ndarray,
+    labels: np.ndarray,
+    marker_frame: pd.DataFrame,
+    show_ids: bool | str = "auto",
+) -> np.ndarray:
+    """Outline objects by marker call: positive in amber, negative in slate.
+
+    Both populations are drawn. Showing only the positives would hide the
+    denominator, and the denominator is the whole point of a percentage.
+    """
+    canvas = to_display_rgb(base).copy()
+    labels = np.asarray(labels)
+    if labels.max() == 0 or marker_frame.empty:
+        return canvas
+
+    positive_ids = set(
+        marker_frame.loc[marker_frame["marker_positive"], "object_id"].astype(int)
+    )
+    boundaries = find_boundaries(labels, mode="outer")
+    rows, cols = np.nonzero(boundaries)
+    for row, col in zip(rows, cols):
+        canvas[row, col] = (
+            POSITIVE_COLOR if int(labels[row, col]) in positive_ids else NEGATIVE_COLOR
+        )
+
+    if show_ids == "auto":
+        show_ids = should_show_ids(labels)
+    if not show_ids:
+        return canvas
+
+    from skimage.measure import regionprops_table
+
+    font_scale = _auto_font_scale(_median_diameter(labels))
+    thickness = 1 if font_scale < 0.55 else 2
+    table = regionprops_table(labels, properties=("label", "centroid"))
+    for object_id, row, col in zip(
+        table["label"], table["centroid-0"], table["centroid-1"]
+    ):
+        text = str(int(object_id))
+        colour = POSITIVE_COLOR if int(object_id) in positive_ids else NEGATIVE_COLOR
+        (text_w, text_h), _ = cv2.getTextSize(
+            text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
+        )
+        origin = (int(round(col)) - text_w // 2, int(round(row)) + text_h // 2)
+        cv2.putText(canvas, text, origin, cv2.FONT_HERSHEY_SIMPLEX, font_scale,
+                    LABEL_OUTLINE, thickness + 2, cv2.LINE_AA)
+        cv2.putText(canvas, text, origin, cv2.FONT_HERSHEY_SIMPLEX, font_scale,
+                    colour, thickness, cv2.LINE_AA)
+    return canvas
+
+
+def marker_histogram(marker_frame: pd.DataFrame, threshold: float) -> plt.Figure:
+    """Per-object marker intensity with the positivity threshold drawn.
+
+    This is the real diagnostic for whether a positive population exists. No
+    automatic statistic is reliable at a few dozen objects, but one hump versus
+    two is obvious on sight.
+    """
+    figure, axes = plt.subplots(figsize=(6.2, 3.2), dpi=120)
+    figure.patch.set_facecolor(_PANEL)
+    axes.set_facecolor(_PANEL)
+
+    values = marker_frame["marker_mean"].dropna() if not marker_frame.empty else pd.Series(dtype=float)
+    if values.empty:
+        axes.text(0.5, 0.5, "No objects measured", ha="center", va="center",
+                  transform=axes.transAxes, color=_INK_DIM)
+        axes.set_xticks([]); axes.set_yticks([])
+    else:
+        bins = int(np.clip(np.sqrt(len(values)) * 2.0, 8, 40))
+        negatives = values[values < threshold]
+        positives = values[values >= threshold]
+        axes.hist([negatives, positives], bins=bins, stacked=True,
+                  color=["#6E8094", _SIGNAL], edgecolor=_PANEL, linewidth=0.7,
+                  label=[f"negative ({len(negatives)})", f"positive ({len(positives)})"])
+        if np.isfinite(threshold):
+            axes.axvline(threshold, color=_INK, linestyle="--", linewidth=1.3)
+        legend = axes.legend(frameon=False, fontsize=8)
+        for text in legend.get_texts():
+            text.set_color(_INK_DIM)
+            text.set_fontfamily(_MONO)
+
+    axes.set_title("Marker intensity per object", fontsize=10, color=_INK, pad=10)
+    axes.set_xlabel("Mean marker intensity (0-255)", fontsize=9, color=_INK_DIM)
+    axes.set_ylabel("Object count", fontsize=9, color=_INK_DIM)
+    axes.tick_params(colors=_INK_DIM, labelsize=8)
+    for label in axes.get_xticklabels() + axes.get_yticklabels():
+        label.set_fontfamily(_MONO)
+    axes.spines[["top", "right"]].set_visible(False)
+    for side in ("left", "bottom"):
+        axes.spines[side].set_color(_RULE)
+    figure.tight_layout()
+    return figure

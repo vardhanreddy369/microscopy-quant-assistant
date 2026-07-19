@@ -8,6 +8,10 @@ images into object-level quantitative measurements.
 ## Current capabilities
 
 - Fluorescence-channel selection (grayscale, red, green, blue)
+- Two segmentation engines: a classical watershed, and an optional pretrained
+  model (Cellpose) that is markedly more accurate on touching nuclei
+- **Percent-marker-positive quantification** from a two-channel image, which is
+  the shape of a TUNEL, cleaved-caspase-3 or Ki67 readout
 - Cell/nucleus segmentation by classical image processing
 - Separation of touching objects using a distance-transform watershed
 - Optional correction of uneven illumination before thresholding
@@ -173,13 +177,42 @@ that way, on the same held-out data:
 | Random forest (Caicedo et al.) | 0.840 |
 | CellProfiler, advanced (Caicedo et al.) | 0.811 |
 | CellProfiler, basic (Caicedo et al.) | 0.790 |
-| **This project (classical watershed)** | **0.770** |
+| **This project — classical watershed** | **0.770** |
+| **This project — Cellpose engine** | **0.873** |
 
-So this pipeline is **last on that list**, a little below a basic CellProfiler
-configuration and 0.13 below U-Net. That is the honest position, and it is
-roughly where a from-scratch classical watershed should land: the deep-learning
-methods learn object boundaries, while a distance transform can only assume
-them.
+Read those two rows carefully, because they say different things.
+
+The **classical watershed is last on that list**, a little below a basic
+CellProfiler configuration and 0.13 below U-Net. That is the honest position and
+roughly where a from-scratch classical method should land: the learned methods
+predict object boundaries, while a distance transform can only assume them.
+
+The **Cellpose engine scores 0.873**, above DeepCell and below U-Net. It is not
+this project's algorithm — it is a pretrained generalist model, used correctly
+and measured on the same held-out split with the same metric. The contribution
+is the harness that makes the comparison, not the model.
+
+Head to head on the same 50 held-out images:
+
+| | Classical watershed | Cellpose |
+| --- | ---: | ---: |
+| F1 @ IoU 0.50 | 0.899 | **0.954** |
+| Mean F1 across IoU | 0.770 | **0.873** |
+| Mean IoU of matched objects | 0.886 | **0.930** |
+| Split errors | 87 | **17** |
+| Merge errors | 258 | **112** |
+| Runtime per image | **~0.1 s** | ~10 s |
+
+The merge count is the story. Merging touching nuclei is the classical
+pipeline's dominant failure, and the learned model more than halves it. The
+classical engine remains the default because it is instant, needs no network and
+no GPU, and is good enough to demonstrate the workflow; Cellpose is there for
+when accuracy matters more than speed.
+
+```bash
+pip install -r requirements-cellpose.txt   # optional, pulls in PyTorch
+python scripts/validate.py --split test --engine cellpose
+```
 
 The 0.899 figure above is F1 at IoU 0.50 only, the most permissive threshold.
 It is a real number and it is reported as such, but it must not be set beside
@@ -213,6 +246,47 @@ intuition.
 Average precision is averaged over the full ten-threshold sweep, IoU 0.50 to
 0.95 in steps of 0.05, the same range used by the Data Science Bowl and COCO, so
 the figure is comparable to published numbers rather than to a private variant.
+
+### Percent-marker-positive, against a known fraction
+
+Counting objects is rarely the endpoint of a fluorescence experiment. The
+reported result is usually a fraction — percent TUNEL-positive, percent
+cleaved-caspase-3-positive, percent Ki67-positive — which is a two-channel
+measurement: segment nuclei in the nuclear channel, score the marker channel
+*inside* those masks, then report the percentage.
+
+The bundled `synthetic_marker_pair.png` has 44 nuclei of which 13 are
+marker-positive by construction, so the answer is known:
+
+| | Truth | Measured |
+| --- | ---: | ---: |
+| Nuclei | 44 | **44** |
+| Marker-positive | 13 | **13** |
+| Percent positive | 29.55% | **29.5%** |
+
+Error: 0.0 percentage points.
+
+Two design points matter more than that number:
+
+**The nuclear channel defines the denominator.** Segmenting on the marker
+channel instead would find only the cells that are already positive and make the
+percentage meaningless. Negative cells are drawn in the overlay too, in slate
+rather than amber, because the denominator is the whole point.
+
+**The automatic threshold uses an exact search, not an image histogram.**
+`skimage.threshold_otsu` bins its input into 256 bins, which is right for an
+image of millions of pixels and wrong for a few dozen per-object means. On this
+sample — cleanly bimodal, with a gap between 28 and 105 — it returned 27.9,
+inside the negative cluster, and misclassified two negatives as positive.
+Exhaustive search over the sorted values places the threshold at 66.3 and
+recovers the fraction exactly.
+
+No automatic "is this split real?" statistic is exported. With a few dozen
+objects, sparse sampling puts a respectable gap inside a single population by
+chance, so any fixed cut-off would be indefensible. The app shows the per-object
+intensity histogram with the threshold drawn on it instead: one hump or two is
+obvious on sight. For a result that has to hold up, set the threshold manually
+from a negative control imaged alongside the sample.
 
 ### Against known counts (synthetic samples)
 
@@ -311,6 +385,8 @@ src/
   visualization.py          Overlays, masks, charts
   export.py                 CSV and PNG serialisation
   validation.py             IoU matching and segmentation metrics
+  markers.py                Two-channel percent-positive quantification
+  learned_segmentation.py   Optional Cellpose engine
 scripts/
   run_pipeline.py           Command-line pipeline
   make_sample_data.py       Regenerate sample images and ground truth
@@ -321,7 +397,7 @@ scripts/
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      140 tests
+tests/                      185 tests
 outputs/                    Generated results
 ```
 
@@ -331,7 +407,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-140 tests covering image loading, multi-page and bit-depth handling, channel
+185 tests covering image loading, multi-page and bit-depth handling, channel
 selection,
 thresholding, watershed separation, measurement correctness, counting accuracy
 against ground truth, the scoring metrics themselves, and the interface driven
