@@ -12,15 +12,15 @@
   "summary": {
     "images": 50,
     "true_objects": 5720,
-    "predicted_objects": 5129,
-    "f1_at_50": 0.899069038621071,
-    "precision_at_50": 0.9508676155195944,
-    "recall_at_50": 0.8526223776223776,
-    "f1_at_75": 0.8384182873997603,
-    "average_precision": 0.6534188809554112,
-    "mean_matched_iou": 0.886178438871533,
-    "split_errors": 87,
-    "merge_errors": 258,
-    "count_mape": 0.10870382568760624
+    "predicted_objects": 5109,
+    "f1_at_50": 0.9012835903592206,
+    "precision_at_50": 0.9551771383832452,
+    "recall_at_50": 0.8531468531468531,
+    "f1_at_75": 0.8414442700156985,
+    "average_precision": 0.6564911284878846,
+    "mean_matched_iou": 0.8873407451325707,
+    "split_errors": 69,
+    "merge_errors": 259,
+    "count_mape": 0.11013375380052422
   }
 }

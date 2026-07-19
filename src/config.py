@@ -57,6 +57,13 @@ DEFAULTS = {
     "cleanup_radius": 0,
     "fill_holes": True,
     "separate_touching": True,
+    # Seeds are chosen by prominence rather than by a single global spacing.
+    # Measured like-for-like on the BBBC039 held-out test split: mean F1 across
+    # IoU thresholds 0.7702 -> 0.7722, F1@0.50 0.8991 -> 0.9013, split errors
+    # 87 -> 69. A real gain, and a small one. See scripts/experiment_classical.py.
+    "seeding": "h_maxima",
+    "seed_depth": 1.0,
+    # Retained for the peak_distance seeding method.
     "peak_min_distance": 9,
     # Off by default. It is ~10x slower than the rest of the pipeline and on the
     # evenly illuminated BBBC039 benchmark it is worth at most +0.004 F1, inside

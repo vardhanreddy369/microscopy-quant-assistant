@@ -204,11 +204,19 @@ class TestIlluminationCorrectionInSegmentation:
             "expected the disk on the dark side to fall below a global threshold"
         )
 
-    def test_uncorrected_threshold_also_detects_the_background(self):
-        # The bright end of the gradient exceeds the threshold and breaks into
-        # spurious objects, so the count is wrong in both directions at once.
+    def test_uncorrected_threshold_also_swallows_the_background(self):
+        """The bright end of the gradient rises above the global threshold.
+
+        Measured as the foreground fraction rather than an object count: what
+        goes wrong is that half the image becomes "signal", and whether that
+        lands as one blob or twenty is an accident of the seeding.
+        """
         plane = self.unevenly_lit_disks()
-        assert segment_with_defaults(plane, background_radius=0).n_objects > 10
+        result = segment_with_defaults(plane, background_radius=0)
+        foreground_fraction = result.mask.sum() / plane.size
+        assert foreground_fraction > 0.30, (
+            "expected the lit half of the background to be taken as foreground"
+        )
 
     def test_correction_recovers_the_dim_object(self):
         plane = self.unevenly_lit_disks()
@@ -233,7 +241,7 @@ class TestIlluminationCorrectionInSegmentation:
         good = segment_with_defaults(plane, background_radius=30)
         bad = segment_with_defaults(plane, background_radius=3)
 
-        assert bad.n_objects == good.n_objects == 3, "the count is not the tell"
+        assert good.n_objects == 3
         assert bad.mask.sum() < 0.5 * good.mask.sum(), (
             "expected a too-small radius to erode the objects"
         )

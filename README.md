@@ -177,7 +177,7 @@ that way, on the same held-out data:
 | Random forest (Caicedo et al.) | 0.840 |
 | CellProfiler, advanced (Caicedo et al.) | 0.811 |
 | CellProfiler, basic (Caicedo et al.) | 0.790 |
-| **This project — classical watershed** | **0.770** |
+| **This project — classical watershed** | **0.772** |
 | **This project — Cellpose engine** | **0.873** |
 
 Read those two rows carefully, because they say different things.
@@ -196,10 +196,10 @@ Head to head on the same 50 held-out images:
 
 | | Classical watershed | Cellpose |
 | --- | ---: | ---: |
-| F1 @ IoU 0.50 | 0.899 | **0.954** |
-| Mean F1 across IoU | 0.770 | **0.873** |
+| F1 @ IoU 0.50 | 0.901 | **0.954** |
+| Mean F1 across IoU | 0.772 | **0.873** |
 | Mean IoU of matched objects | 0.886 | **0.930** |
-| Split errors | 87 | **17** |
+| Split errors | 69 | **17** |
 | Merge errors | 258 | **112** |
 | Runtime per image | **~0.1 s** | ~10 s |
 
@@ -246,6 +246,50 @@ intuition.
 Average precision is averaged over the full ten-threshold sweep, IoU 0.50 to
 0.95 in steps of 0.05, the same range used by the Data Science Bowl and COCO, so
 the figure is comparable to published numbers rather than to a private variant.
+
+### Where the classical ceiling is, and why
+
+The classical pipeline scores 0.772 (mean F1 across IoU 0.50–0.95) against
+CellProfiler's published 0.790 and 0.811. Four experiments were run to find out
+whether that gap could be closed. Reproduce them with
+`python scripts/experiment_classical.py`.
+
+**Seeding by prominence, not spacing — adopted.** Distance-transform maxima were
+selected by an h-maxima transform (keep maxima rising at least 1.0 above their
+surroundings) instead of a single global minimum spacing. Prominence is local, so
+nuclei of different sizes are judged on their own terms, whereas one spacing has
+to suit every nucleus at once. On the held-out test split: mean F1 0.7702 →
+0.7722, F1@0.50 0.8991 → 0.9013, split errors 87 → 69. A real gain, and a small
+one.
+
+**Suppression scaled to each object's own radius — rejected.** The distance
+transform estimates each object's radius at its own peak, so in principle each
+candidate seed could suppress neighbours over a radius scaled to itself. It was
+worse at every setting tried (best 0.737 against 0.770) because it over-splits
+badly — 760 split errors against 169. The idea is discarded, not buried.
+
+**Local boundary refinement — rejected.** Re-cutting each object's edge against
+a threshold local to that object was expected to raise IoU. It lowered it, 0.886
+→ 0.865. Human annotation boundaries do not sit where an intensity edge does, so
+refining toward the intensity edge moves away from the target.
+
+**An oracle experiment settles it.** Replacing the seeds entirely with one seed
+per *ground-truth* object — perfect seeding, unavailable in practice — scores
+0.764 in the same harness where prominence seeding scores 0.763. **Seeding is
+within about 0.001 of its own ceiling.** Nothing further is available there, and
+the remaining error is in the foreground mask: even with perfect seeds, hundreds
+of merges survive because dim nuclei never enter the mask at all.
+
+Attacking the mask was tried too — local thresholding, a union of global and
+local, and hysteresis. All raised F1@0.50 (recovering dim nuclei) and all *lost*
+on mean F1, because the extra detections came with worse boundaries (IoU 0.863
+against 0.885) and mean F1 weights strict overlap heavily.
+
+The conclusion is that threshold-plus-watershed is at its practical limit around
+0.77 on this benchmark. CellProfiler reaches 0.811 through per-object declumping
+built over many years, not through one idea. This is precisely why the Cellpose
+engine exists in this tool: when the classical approach is exhausted, the honest
+move is to offer a better method rather than to keep tuning a worse one.
 
 ### Percent-marker-positive, against a known fraction
 

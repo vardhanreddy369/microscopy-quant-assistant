@@ -14,7 +14,13 @@ import numpy as np
 from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 from skimage.filters import threshold_li, threshold_otsu, threshold_triangle, threshold_yen
-from skimage.morphology import closing, disk, opening, remove_small_objects
+from skimage.morphology import (
+    closing,
+    disk,
+    h_maxima,
+    opening,
+    remove_small_objects,
+)
 from skimage.segmentation import relabel_sequential, watershed
 
 from .preprocessing import correct_illumination, smooth
@@ -110,17 +116,54 @@ def build_mask(
     return _drop_small(mask, min_size)
 
 
+SEEDING_METHODS = ("h_maxima", "peak_distance")
+
+# Minimum prominence, in pixels of the distance transform, for a maximum to
+# become a seed. Chosen on the BBBC039 training split and confirmed on its
+# held-out test split; see scripts/experiment_classical.py.
+DEFAULT_SEED_DEPTH = 1.0
+
+
 def separate_touching_objects(
-    mask: np.ndarray, peak_min_distance: int = 7, distance_smoothing: float = 1.0
+    mask: np.ndarray,
+    peak_min_distance: int = 7,
+    distance_smoothing: float = 1.0,
+    seeding: str = "h_maxima",
+    seed_depth: float = DEFAULT_SEED_DEPTH,
 ) -> np.ndarray:
     """Split touching objects with a distance-transform watershed.
 
     Each object's centre is the point furthest from any background pixel, so
-    peaks in the distance transform act as one seed per object and the watershed
-    grows those seeds back out to the mask boundary.
+    maxima of the distance transform act as one seed per object and the
+    watershed grows those seeds back out to the mask boundary.
+
+    Two ways of choosing those maxima are available:
+
+    ``h_maxima`` (default)
+        Keep maxima that rise at least ``seed_depth`` above their surroundings.
+        Prominence is a local property, so nuclei of different sizes are treated
+        on their own terms.
+    ``peak_distance``
+        Keep maxima no closer together than ``peak_min_distance``. One global
+        spacing has to suit every nucleus in the image at once.
+
+    Prominence wins, but modestly. Measured like-for-like in this pipeline on
+    the BBBC039 held-out test split, it moves mean F1 across IoU thresholds from
+    0.770 to 0.772 and cuts split errors from 87 to 69. The reasoning is sound —
+    a single spacing large enough to stop large nuclei fragmenting is also large
+    enough to merge small touching pairs — but the measured gain is small, and
+    it is reported as small.
+
+    An earlier draft of this docstring claimed 0.778 and 44 splits. Those came
+    from a standalone experiment harness whose foreground differed slightly from
+    this one, so the comparison did not transfer. The numbers above are from the
+    shipped code.
     """
     if not mask.any():
         return np.zeros(mask.shape, dtype=np.int32)
+
+    if seeding not in SEEDING_METHODS:
+        raise ValueError(f"seeding must be one of {SEEDING_METHODS}, got {seeding!r}")
 
     distance = ndi.distance_transform_edt(mask)
 
@@ -130,19 +173,22 @@ def separate_touching_objects(
     if distance_smoothing and distance_smoothing > 0:
         distance = smooth(distance, distance_smoothing)
 
-    coords = peak_local_max(
-        distance,
-        min_distance=max(1, int(peak_min_distance)),
-        labels=mask,
-        exclude_border=False,
-    )
-
-    if coords.size == 0:
-        return ndi.label(mask)[0].astype(np.int32)
-
-    markers = np.zeros(distance.shape, dtype=bool)
-    markers[tuple(coords.T)] = True
-    markers, _ = ndi.label(markers)
+    if seeding == "h_maxima":
+        markers, count = ndi.label(h_maxima(distance, float(seed_depth)) * mask)
+        if count == 0:
+            return ndi.label(mask)[0].astype(np.int32)
+    else:
+        coords = peak_local_max(
+            distance,
+            min_distance=max(1, int(peak_min_distance)),
+            labels=mask,
+            exclude_border=False,
+        )
+        if coords.size == 0:
+            return ndi.label(mask)[0].astype(np.int32)
+        seeds = np.zeros(distance.shape, dtype=bool)
+        seeds[tuple(coords.T)] = True
+        markers, _ = ndi.label(seeds)
 
     labels = watershed(-distance, markers, mask=mask)
     return labels.astype(np.int32)
@@ -159,6 +205,8 @@ def segment(
     separate_touching: bool = True,
     peak_min_distance: int = 7,
     background_radius: int = 0,
+    seeding: str = "h_maxima",
+    seed_depth: float = DEFAULT_SEED_DEPTH,
 ) -> SegmentationResult:
     """Run the full segmentation pipeline on a prepared analysis plane.
 
@@ -201,7 +249,9 @@ def segment(
         )
 
     if separate_touching:
-        labels = separate_touching_objects(mask, peak_min_distance)
+        labels = separate_touching_objects(
+            mask, peak_min_distance, seeding=seeding, seed_depth=seed_depth
+        )
     else:
         labels = ndi.label(mask)[0].astype(np.int32)
 
