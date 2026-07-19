@@ -148,28 +148,53 @@ def labels_to_color(labels: np.ndarray) -> np.ndarray:
     return (np.clip(colored, 0, 1) * 255).astype(np.uint8)
 
 
+# Chart palette, matching the application theme. Charts sit inside a dark page,
+# so a default white figure would punch a bright hole in it and make the
+# micrographs beside it harder to read.
+_PANEL = "#141B23"
+_INK = "#E6EAF0"
+_INK_DIM = "#8A97A8"
+_RULE = "#2A3542"
+_SIGNAL = "#F2C14E"   # amber, the measurement accent
+_DAPI = "#7FB3D5"     # blue, the intensity channel
+
+# Numbers in the charts are set in the same monospace face as the readout.
+_MONO = ["SF Mono", "Menlo", "DejaVu Sans Mono", "monospace"]
+
+
 def _histogram(
     values: pd.Series, title: str, xlabel: str, color: str
 ) -> plt.Figure:
     figure, axes = plt.subplots(figsize=(6, 3.2), dpi=120)
+    figure.patch.set_facecolor(_PANEL)
+    axes.set_facecolor(_PANEL)
+
     clean = pd.Series(values).dropna()
 
     if clean.empty:
         axes.text(0.5, 0.5, "No objects detected", ha="center", va="center",
-                  transform=axes.transAxes, color="#888")
+                  transform=axes.transAxes, color=_INK_DIM)
         axes.set_xticks([])
         axes.set_yticks([])
     else:
         bins = int(np.clip(np.sqrt(len(clean)) * 1.5, 6, 40))
-        axes.hist(clean, bins=bins, color=color, edgecolor="white", linewidth=0.6)
-        axes.axvline(clean.median(), color="#d32f2f", linestyle="--", linewidth=1.4,
+        axes.hist(clean, bins=bins, color=color, edgecolor=_PANEL, linewidth=0.7)
+        axes.axvline(clean.median(), color=_INK, linestyle="--", linewidth=1.3,
                      label=f"median {clean.median():.1f}")
-        axes.legend(frameon=False, fontsize=8)
+        legend = axes.legend(frameon=False, fontsize=8)
+        for text in legend.get_texts():
+            text.set_color(_INK_DIM)
+            text.set_fontfamily(_MONO)
 
-    axes.set_title(title, fontsize=10)
-    axes.set_xlabel(xlabel, fontsize=9)
-    axes.set_ylabel("Object count", fontsize=9)
+    axes.set_title(title, fontsize=10, color=_INK, pad=10)
+    axes.set_xlabel(xlabel, fontsize=9, color=_INK_DIM)
+    axes.set_ylabel("Object count", fontsize=9, color=_INK_DIM)
+    axes.tick_params(colors=_INK_DIM, labelsize=8)
+    for label in axes.get_xticklabels() + axes.get_yticklabels():
+        label.set_fontfamily(_MONO)
     axes.spines[["top", "right"]].set_visible(False)
+    for side in ("left", "bottom"):
+        axes.spines[side].set_color(_RULE)
     figure.tight_layout()
     return figure
 
@@ -178,11 +203,11 @@ def area_histogram(frame: pd.DataFrame) -> plt.Figure:
     column = "area_um2" if "area_um2" in frame.columns else "area_pixels"
     unit = "µm²" if column == "area_um2" else "pixels"
     values = frame[column] if not frame.empty else pd.Series(dtype=float)
-    return _histogram(values, "Object size distribution", f"Area ({unit})", "#4c8dae")
+    return _histogram(values, "Object size distribution", f"Area ({unit})", _SIGNAL)
 
 
 def intensity_histogram(frame: pd.DataFrame) -> plt.Figure:
     values = frame["mean_intensity"] if not frame.empty else pd.Series(dtype=float)
     return _histogram(
-        values, "Mean intensity distribution", "Mean intensity (0-255)", "#8e6bab"
+        values, "Mean intensity distribution", "Mean intensity (0-255)", _DAPI
     )

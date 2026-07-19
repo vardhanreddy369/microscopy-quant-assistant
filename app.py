@@ -35,9 +35,100 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-      [data-testid="stMetricValue"] { font-size: 2.0rem; }
-      [data-testid="stMetricLabel"] { font-size: 0.95rem; }
-      .block-container { padding-top: 2.2rem; }
+      :root {
+        --rule: #2A3542;
+        --ink-dim: #8A97A8;
+        --signal: #F2C14E;     /* the colour of the segmentation boundaries */
+        --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Roboto Mono", monospace;
+      }
+
+      /* Clears Streamlit's fixed header bar, which otherwise sits over the
+         first element on the page. */
+      .block-container { padding-top: 3.6rem; max-width: 1500px; }
+
+      /* --- Readout -------------------------------------------------------
+         Measured quantities are set in monospace with tabular figures. They
+         are instrument output, not headline statistics, and tabular digits
+         stay legible and aligned when read from across a desk. */
+      [data-testid="stMetricValue"] {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 2.15rem;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: #F4F7FA;
+      }
+      [data-testid="stMetricLabel"] p {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        color: var(--ink-dim);
+      }
+      /* The metrics read as one recessed readout strip rather than four cards. */
+      [data-testid="stMetric"] {
+        background: #141B23;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        padding: 0.85rem 1.1rem;
+      }
+
+      /* --- Field-of-view registration marks -------------------------------
+         Four corner brackets framing the specimen panels, the way a field of
+         view is marked on an instrument. Scoped to the micrographs on purpose:
+         a field-of-view bracket around a histogram would mean nothing, and the
+         mark only earns its place if it always means "this is the specimen".
+         This is the one decorative move; everything else stays quiet. */
+      .st-key-specimen [data-testid="stImage"],
+      .st-key-specimen_mask [data-testid="stImage"] {
+        padding: 9px;
+        background-image:
+          linear-gradient(var(--signal), var(--signal)), linear-gradient(var(--signal), var(--signal)),
+          linear-gradient(var(--signal), var(--signal)), linear-gradient(var(--signal), var(--signal)),
+          linear-gradient(var(--signal), var(--signal)), linear-gradient(var(--signal), var(--signal)),
+          linear-gradient(var(--signal), var(--signal)), linear-gradient(var(--signal), var(--signal));
+        background-repeat: no-repeat;
+        background-size:
+          14px 1px, 1px 14px,   /* top-left    */
+          14px 1px, 1px 14px,   /* top-right   */
+          14px 1px, 1px 14px,   /* bottom-left */
+          14px 1px, 1px 14px;   /* bottom-right*/
+        background-position:
+          left top, left top,
+          right top, right top,
+          left bottom, left bottom,
+          right bottom, right bottom;
+      }
+      .st-key-specimen [data-testid="stImage"] img,
+      .st-key-specimen_mask [data-testid="stImage"] img { display: block; }
+
+      /* --- Section rules --------------------------------------------------
+         Sidebar groups are labelled like panel sections, so the controls read
+         as an ordered instrument panel rather than a form. */
+      [data-testid="stSidebar"] h3 {
+        font-size: 0.72rem !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--ink-dim);
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 0.45rem;
+        margin-bottom: 0.9rem;
+      }
+      [data-testid="stSidebar"] h1 {
+        font-size: 0.95rem !important;
+        letter-spacing: 0.02em;
+      }
+
+      /* Slider readouts and captions are data too. */
+      [data-testid="stSidebar"] [data-testid="stSliderThumbValue"],
+      [data-testid="stSidebar"] [data-testid="stSliderTickBarMin"],
+      [data-testid="stSidebar"] [data-testid="stSliderTickBarMax"] {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      h1 { letter-spacing: -0.025em; }
 
       /* Streamlit's "install our skills" product nudge overlays the title and
          the validation disclaimer. Fine while developing, not while presenting
@@ -45,6 +136,10 @@ st.markdown(
          hashed emotion class, which is not. */
       [data-testid="stSkillsNudge"],
       [data-testid="stSkillsNudgeAnchor"] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      }
     </style>
     """,
     unsafe_allow_html=True,
@@ -265,10 +360,23 @@ PARAMS = dict(
 # Header
 # --------------------------------------------------------------------------
 
+# The eyebrow states the method rather than decorating the title. Naming the
+# technique on sight is the same commitment the rest of the app makes: this is
+# classical image processing, and it should never be mistaken for a model.
+st.markdown(
+    '<div style="font-family:ui-monospace,\'SF Mono\',Menlo,monospace;'
+    'font-size:0.68rem;letter-spacing:0.22em;text-transform:uppercase;'
+    'color:#F2C14E;margin-bottom:0.5rem;">'
+    'Threshold &nbsp;·&nbsp; Distance transform &nbsp;·&nbsp; Watershed'
+    "</div>",
+    unsafe_allow_html=True,
+)
 st.title("Biomedical Microscopy Quantification Assistant")
 st.markdown(
-    "A proof-of-concept tool for converting microscopy images into "
-    "reproducible quantitative measurements."
+    '<p style="color:#8A97A8;font-size:1.02rem;margin-top:-0.4rem;'
+    'max-width:60ch;">A proof-of-concept tool for converting microscopy '
+    "images into reproducible quantitative measurements.</p>",
+    unsafe_allow_html=True,
 )
 st.warning(
     "Demonstration software using public sample images. Segmentation is "
@@ -286,21 +394,23 @@ def render_single(image_bytes: bytes, display_name: str,
     area_column = "area_um2" if pixel_size else "area_pixels"
     area_unit = "µm²" if pixel_size else "px"
 
+    # The unit belongs to the label, not the value. A readout shows a number;
+    # the label says what the number is and what it is measured in.
     cards = st.columns(4)
     cards[0].metric("Objects detected", f"{summary['count']:,}")
     cards[1].metric(
-        "Average area",
-        "n/a" if not summary["count"] else f"{frame[area_column].mean():,.0f} {area_unit}",
+        f"Average area ({area_unit})",
+        "n/a" if not summary["count"] else f"{frame[area_column].mean():,.0f}",
     )
     cards[2].metric(
-        "Median area",
-        "n/a" if not summary["count"] else f"{frame[area_column].median():,.0f} {area_unit}",
+        f"Median area ({area_unit})",
+        "n/a" if not summary["count"] else f"{frame[area_column].median():,.0f}",
     )
     cards[3].metric(
-        "Average intensity",
+        "Average intensity (0-255)",
         "n/a" if not summary["count"] else f"{summary['mean_intensity']:.1f}",
-        help="Mean signal inside objects, on a 0-255 scale, measured before "
-             "contrast normalisation.",
+        help="Mean signal inside objects, measured before contrast "
+             "normalisation.",
     )
 
     caveat = SAMPLE_CAVEATS.get(active_sample)
@@ -333,15 +443,16 @@ def render_single(image_bytes: bytes, display_name: str,
             "Set 'Object ID labels' to 'Always' in Advanced to force them on."
         )
 
-    left, right = st.columns(2)
-    with left:
-        st.subheader("Original")
-        st.image(visualization.to_display_rgb(prepared.original), width="stretch")
-    with right:
-        st.subheader("Annotated result")
-        st.image(annotated, width="stretch")
+    with st.container(key="specimen"):
+        left, right = st.columns(2)
+        with left:
+            st.subheader("Original")
+            st.image(visualization.to_display_rgb(prepared.original), width="stretch")
+        with right:
+            st.subheader("Annotated result")
+            st.image(annotated, width="stretch")
 
-    with st.expander("Segmentation mask"):
+    with st.expander("Segmentation mask"), st.container(key="specimen_mask"):
         mask_cols = st.columns(2)
         mask_cols[0].image(
             visualization.mask_to_image(result.mask),

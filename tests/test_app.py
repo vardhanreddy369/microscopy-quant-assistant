@@ -27,6 +27,20 @@ def find(collection, label):
     raise KeyError(f"no widget labelled {label!r} in {[w.label for w in collection]}")
 
 
+def find_starting(collection, prefix):
+    """Locate a widget whose label starts with ``prefix``.
+
+    Metric labels carry their unit, e.g. "Average area (px)" or "(µm²)", so
+    tests match the stable part rather than a unit that depends on settings.
+    """
+    for widget in collection:
+        if widget.label.startswith(prefix):
+            return widget
+    raise KeyError(
+        f"no widget labelled {prefix!r}* in {[w.label for w in collection]}"
+    )
+
+
 @pytest.fixture(scope="module")
 def default_run():
     app = AppTest.from_file(APP, default_timeout=TIMEOUT)
@@ -74,7 +88,7 @@ class TestEmptyResult:
         assert "threshold" in message
 
     def test_area_metrics_degrade_gracefully(self, impossible_threshold):
-        assert find(impossible_threshold.metric, "Average area").value == "n/a"
+        assert find_starting(impossible_threshold.metric, "Average area").value == "n/a"
 
 
 class TestMinimumSizeTooLarge:

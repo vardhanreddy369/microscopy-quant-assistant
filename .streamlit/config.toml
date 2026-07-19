@@ -7,3 +7,56 @@ toolbarMode = "viewer"
 
 [browser]
 gatherUsageStats = false
+
+# ---------------------------------------------------------------------------
+# Theme
+#
+# Dark, because the content is near-black micrographs. A bright interface beside
+# a dark specimen makes the specimen harder to judge, which is why acquisition
+# and analysis software is dark. The specimen should be the brightest thing on
+# screen.
+#
+# The background is a deep blue-grey rather than black: a neutral that does not
+# tint the operator's perception of the image.
+#
+# Fonts are system stacks on purpose. The demo has to run with no network, so a
+# web font is not an option.
+# ---------------------------------------------------------------------------
+
+[theme]
+base = "dark"
+
+backgroundColor = "#10151B"          # field
+secondaryBackgroundColor = "#171E26" # raised panels, sidebar
+textColor = "#E6EAF0"
+borderColor = "#2A3542"
+linkColor = "#7FB3D5"
+
+# Amber: the same colour as the segmentation boundaries drawn on the images, so
+# the interface accent and the measurement overlay are one idea.
+primaryColor = "#F2C14E"
+
+font = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif"
+headingFont = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif"
+# Every measured quantity is set in this face.
+codeFont = "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Roboto Mono', monospace"
+
+baseFontSize = 15
+headingFontWeights = [750, 650, 600]
+baseRadius = "0.25rem"
+buttonRadius = "0.25rem"
+showWidgetBorder = true
+showSidebarBorder = true
+
+# Instrument semantics: amber marks a measurement, blue is informational, red is
+# a result that must not be trusted.
+yellowColor = "#F2C14E"
+blueColor = "#7FB3D5"
+redColor = "#E4614A"
+grayColor = "#8A97A8"
+
+dataframeHeaderBackgroundColor = "#1C242E"
+dataframeBorderColor = "#2A3542"
+
+# Charts read against the dark field.
+chartCategoricalColors = ["#F2C14E", "#7FB3D5", "#8FBF9F", "#E4614A", "#B79BD0"]
