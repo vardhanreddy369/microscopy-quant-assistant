@@ -1,0 +1,12 @@
+# Lint configuration.
+#
+# The test and script files intentionally insert the project root on sys.path
+# before importing `src`, so their imports are not at the top of the file. That
+# is the standard bootstrap for a repo run without installation, not a mistake,
+# so E402 is silenced there rather than papered over with per-line noqa comments.
+
+line-length = 100
+
+[lint.per-file-ignores]
+"tests/*" = ["E402"]
+"scripts/*" = ["E402"]

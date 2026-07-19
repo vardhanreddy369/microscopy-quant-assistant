@@ -66,7 +66,8 @@ def main() -> int:
     mask = blurred > thr
     print(f"     a) Otsu threshold at {thr:.3f}  -> split bright from dark")
     distance = ndi.distance_transform_edt(mask)
-    print("     b) distance transform -> furthest-from-edge = each cell's centre")
+    print(f"     b) distance transform -> furthest-from-edge = each cell's centre "
+          f"(deepest point {distance.max():.0f}px)")
     t0 = time.perf_counter()
     result = segmentation.segment(
         plane, threshold_method="otsu", min_size=DEFAULTS["min_size"],

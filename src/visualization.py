@@ -289,7 +289,8 @@ def marker_histogram(marker_frame: pd.DataFrame, threshold: float) -> plt.Figure
     if values.empty:
         axes.text(0.5, 0.5, "No objects measured", ha="center", va="center",
                   transform=axes.transAxes, color=_INK_DIM)
-        axes.set_xticks([]); axes.set_yticks([])
+        axes.set_xticks([])
+        axes.set_yticks([])
     else:
         bins = int(np.clip(np.sqrt(len(values)) * 2.0, 8, 40))
         negatives = values[values < threshold]
