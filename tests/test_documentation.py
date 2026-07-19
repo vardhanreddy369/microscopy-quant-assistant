@@ -275,3 +275,36 @@ class TestPositivityClaims:
         values = self.marker_intensities("synthetic_marker_pair.png")
         thresholds = {positivity.call_by_mixture(values).threshold for _ in range(5)}
         assert len(thresholds) == 1, "the mixture call must be identical every run"
+
+
+class TestBBBC013Claims:
+    """The real-data figures must match what the harness produces, when the
+    BBBC013 data is present."""
+
+    DATA = ROOT / "validation_data" / "bbbc013" / "BBBC013_v1_images_bmp"
+
+    def _skip_if_absent(self):
+        if not self.DATA.exists():
+            pytest.skip("run scripts/fetch_bbbc013.py first")
+
+    def test_wortmannin_spearman_matches(self):
+        self._skip_if_absent()
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_bbbc013 as harness
+
+        documented = claim(r"\| Wortmannin \|[^|]+\|[^|]+\| \*\*([\d.]+)\*\* \|",
+                           README, "Wortmannin Spearman")
+        result = harness.evaluate_drug("Wortmannin", "ABCD", harness.load_platemap())
+        assert round(result["spearman"], 2) == pytest.approx(documented, abs=0.02)
+
+    def test_ly294002_spearman_matches(self):
+        self._skip_if_absent()
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_bbbc013 as harness
+
+        documented = claim(r"\| LY294002 \|[^|]+\|[^|]+\| \*\*([\d.]+)\*\* \|",
+                           README, "LY294002 Spearman")
+        result = harness.evaluate_drug("LY294002", "EFGH", harness.load_platemap())
+        assert round(result["spearman"], 2) == pytest.approx(documented, abs=0.02)

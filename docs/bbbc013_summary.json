@@ -1,0 +1,16 @@
+{
+  "wortmannin": {
+    "spearman": 0.645,
+    "negative_pct": 18.1,
+    "top_dose": 250.0,
+    "top_pct": 58.7,
+    "separation": 40.6
+  },
+  "ly294002": {
+    "spearman": 0.758,
+    "negative_pct": 10.6,
+    "top_dose": 80.0,
+    "top_pct": 80.9,
+    "separation": 70.3
+  }
+}

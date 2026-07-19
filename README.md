@@ -344,6 +344,54 @@ quantification and its reproducibility, which is where the field has a
 documented, open gap — and which is exactly the readout a marker-based lab
 depends on.
 
+### Validated on real data (BBBC013)
+
+The synthetic validation above establishes per-cell accuracy. This one
+establishes that the method works on **real microscopy**, which is the harder
+and more important claim.
+
+[BBBC013](https://bbbc.broadinstitute.org/BBBC013) is a real FKHR-GFP
+nuclear-translocation screen (Ilya Ravkin; CC BY 3.0): channel 2 is the nuclei,
+channel 1 is a marker that drug treatment drives into the nucleus. Each of its
+96 wells has a **known drug dose**, so the measured positive fraction can be
+checked against a real biological gradient. Reproduce with:
+
+```bash
+python scripts/fetch_bbbc013.py      # ~31 MB, CC BY 3.0
+python scripts/validate_bbbc013.py
+```
+
+Segmenting nuclei on the DNA channel and calling positivity on the marker
+channel, the measured positive fraction rises with dose and separates the
+assay's own controls:
+
+| Drug | Negative control (0 nM) | Top dose | Dose–response (Spearman) |
+| --- | ---: | ---: | ---: |
+| Wortmannin | 18.1% positive | 58.7% (250 nM) | **0.65** |
+| LY294002 | 10.6% positive | 80.9% (80 nM) | **0.76** |
+
+The underlying signal is cleaner still: mean nuclear-marker intensity tracks
+dose at Spearman 0.77, confirming the segmentation and measurement are sound on
+real data and that the noise in the *fraction* is in the positivity call, not
+the images.
+
+**Reported honestly, including the warts.** Two things are worth stating rather
+than hiding. The negative controls read 10–18% positive, not 0% — that is the
+method's false-positive floor on real, noisy wells. And at low intermediate
+doses the fraction is noisy, because the bimodality gate is deliberately
+conservative: when only a few cells have translocated the positive population is
+small and weakly separated, so the gate often declines to call it and returns
+zero. That is the same caution that makes the all-negative synthetic image read
+correctly; here it costs some sensitivity at low doses. Neither behaviour was
+tuned against this dataset.
+
+**What this validates, and what it does not.** BBBC013 provides the dose per
+well, not a per-cell positive/negative label, so this validates the population
+readout — the dose-response and control separation a real screen reports — not a
+per-cell accuracy. The per-cell accuracy is the synthetic validation. Together
+they cover both: exact on labelled synthetic data, and tracking the real
+biological gradient on a real assay.
+
 ### Percent-marker-positive, against a known fraction
 
 Counting objects is rarely the endpoint of a fluorescence experiment. The
@@ -490,12 +538,14 @@ scripts/
   make_sample_data.py       Regenerate sample images and ground truth
   tune_defaults.py          Grid-search defaults against known counts
   fetch_validation_data.py  Download BBBC039 (76 MB, CC0)
+  fetch_bbbc013.py          Download BBBC013 translocation assay (31 MB)
+  validate_bbbc013.py       Positivity dose-response on real BBBC013 data
   validate.py               Score the pipeline against expert annotations
   tune_on_bbbc039.py        Grid-search on the BBBC039 training split
   make_figure.py            Render the README figure
 docs/                       Validation data notes and recorded results
 sample_data/                Public and synthetic images, attribution, ground truth
-tests/                      254 tests
+tests/                      269 tests
 outputs/                    Generated results
 ```
 
@@ -505,7 +555,7 @@ outputs/                    Generated results
 pytest tests/ -q
 ```
 
-254 tests covering image loading, multi-page and bit-depth handling, channel
+269 tests covering image loading, multi-page and bit-depth handling, channel
 selection, thresholding, watershed separation, measurement correctness,
 percent-marker-positive quantification, counting accuracy against ground truth,
 the scoring metrics themselves, and the interface driven headlessly including
