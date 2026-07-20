@@ -74,6 +74,9 @@ def main() -> int:
     print("\n" + RULE)
     print(" MARKER-POSITIVE — the part built for a marker-based lab")
     print(RULE)
+    # The raw image is genuinely two-colour (blue nuclei, green marker), so it
+    # is shown in colour rather than as an extracted grayscale channel.
+    raw_pair = preprocessing.load_image(SAMPLE_DIR / "synthetic_marker_pair.png")
     nuclear = preprocessing.prepare(SAMPLE_DIR / "synthetic_marker_pair.png", channel="blue")
     marker = preprocessing.prepare(SAMPLE_DIR / "synthetic_marker_pair.png", channel="green")
     seg = segment(nuclear.analysis)
@@ -83,12 +86,12 @@ def main() -> int:
 
     print(f"\n3. POSITIVITY — {marker_result.positive} of {marker_result.total} cells "
           f"positive = {marker_result.percent:.1f}%")
-    print("   Left: nuclei (blue channel). Right: the call — amber positive, "
-          "slate negative.\n")
+    print("   Left: the two-channel image (blue nuclei, green marker). "
+          "Right: the call —\n   amber positive, slate negative.\n")
     termimage.show_side_by_side(
-        visualization.to_display_rgb(nuclear.analysis),
-        visualization.annotate_marker(marker.analysis, seg.labels, marker_result.frame),
-        labels=("nuclei", f"{marker_result.percent:.0f}% positive"),
+        visualization.to_display_rgb(raw_pair),
+        visualization.annotate_marker(raw_pair, seg.labels, marker_result.frame),
+        labels=("blue nuclei + green marker", f"{marker_result.percent:.0f}% positive"),
         cols=44,
     )
 
